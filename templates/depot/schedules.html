@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Schedules</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified-theme.css') }}">
+</head>
+<body style="background-color: #ecf0f1;">
+    <div class="container mt-5">
+        <a href="{{ url_for('depot_dashboard') }}" class="btn btn-outline-secondary mb-3">← Back to Dashboard</a>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">Schedule Management</h1>
+            <form method="POST" action="{{ url_for('auto_assign_operations') }}" class="d-flex gap-2">
+                <input type="date" name="assignment_date" value="{{ today_iso }}" class="form-control">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-magic"></i> Auto-Assign Day
+                </button>
+            </form>
+        </div>
+
+        <div class="alert alert-info">
+            Auto-Assign can now work even when a route has no schedule for the selected day. It will use route duration and demand to create a practical daily plan, then pair buses and drivers automatically.
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <a href="{{ url_for('create_schedule') }}" class="btn btn-primary w-100 mb-2">
+                    <i class="fas fa-plus"></i> Create Bus Schedule
+                </a>
+            </div>
+            <div class="col-md-6">
+                <a href="{{ url_for('create_driver_shift') }}" class="btn btn-info w-100 mb-2">
+                    <i class="fas fa-plus"></i> Create Driver Shift
+                </a>
+            </div>
+        </div>
+
+        <!-- Bus Schedules -->
+        <h5 class="mt-5 mb-3">Bus Schedules</h5>
+        <div class="table-responsive bg-white p-4 rounded shadow mb-5">
+            <table class="table table-sm table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Route</th>
+                        <th>Departure</th>
+                        <th>Arrival</th>
+                        <th>Trips/Day</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for schedule in schedules %}
+                    {% set route = routes_by_id.get(schedule.route_id) %}
+                    <tr>
+                        <td>
+                            {% if route %}
+                                {{ route.route_code }} - {{ route.route_name }}
+                            {% else %}
+                                Route {{ schedule.route_id }}
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ schedule.departure_time }}</strong></td>
+                        <td>{{ schedule.arrival_time }}</td>
+                        <td>{{ schedule.trips_per_day }}</td>
+                        <td>
+                            <span class="badge {% if schedule.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                {% if schedule.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Driver Shifts -->
+        <h5 class="mb-3">Driver Shifts</h5>
+        <div class="table-responsive bg-white p-4 rounded shadow">
+            <table class="table table-sm table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Driver</th>
+                        <th>Shift Type</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for shift in driver_shifts %}
+                    {% set driver = drivers_by_id.get(shift.driver_id) %}
+                    <tr>
+                        <td>{{ driver.name if driver else 'Driver ' ~ shift.driver_id }}</td>
+                        <td><strong>{{ shift.shift_type }}</strong></td>
+                        <td>{{ shift.start_time }}</td>
+                        <td>{{ shift.end_time }}</td>
+                        <td>
+                            <span class="badge bg-{% if shift.status == 'Completed' %}success{% elif shift.status == 'On Duty' %}warning{% else %}info{% endif %}">
+                                {{ shift.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depot Assignments</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified-theme.css') }}">
+</head>
+<body style="background-color: #ecf0f1;">
+    <div class="container mt-5">
+        <a href="{{ url_for('depot_dashboard') }}" class="btn btn-outline-secondary mb-3">← Back to Dashboard</a>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="mb-0">Assignments</h1>
+            <div class="d-flex gap-2">
+                <form method="GET" class="d-flex gap-2">
+                    <input type="date" name="date" value="{{ selected_date }}" class="form-control">
+                    <button type="submit" class="btn btn-primary">View</button>
+                </form>
+                <form method="POST" action="{{ url_for('auto_assign_operations') }}">
+                    <input type="hidden" name="assignment_date" value="{{ selected_date }}">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-magic"></i> Auto-Assign
+                    </button>
+                </form>
+                <form method="POST" action="{{ url_for('clear_assignments_operations') }}" onsubmit="return confirm('Are you sure you want to clear all assignments for this date?');">
+                    <input type="hidden" name="assignment_date" value="{{ selected_date }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6>Driver Assignments</h6>
+                        <h3 style="color: #3498db;">{{ stats.driver_total }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6>Drivers On Duty</h6>
+                        <h3 style="color: #10b981;">{{ stats.driver_in_progress }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6>Bus Assignments</h6>
+                        <h3 style="color: #7c3aed;">{{ stats.bus_total }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6>Buses In Service</h6>
+                        <h3 style="color: #f59e0b;">{{ stats.bus_in_service }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0"><i class="fas fa-user-plus"></i> Manual Driver Assignment</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('manual_assign_driver') }}">
+                            <input type="hidden" name="assignment_date" value="{{ selected_date }}">
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-6">
+                                    <select name="driver_id" class="form-select" required>
+                                        <option value="">Select Driver...</option>
+                                        {% for d in drivers %}
+                                        <option value="{{ d.id }}">{{ d.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <select name="bus_id" class="form-select" required>
+                                        <option value="">Select Bus...</option>
+                                        {% for b in buses %}
+                                        <option value="{{ b.id }}">{{ b.bus_number }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-6">
+                                    <input type="time" name="start_time" class="form-control" placeholder="Start Time" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="time" name="end_time" class="form-control" placeholder="End Time" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 btn-sm">Assign Driver</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-purple text-white" style="background-color: #6f42c1;">
+                        <h6 class="mb-0"><i class="fas fa-route"></i> Manual Bus Assignment</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('manual_assign_bus') }}">
+                            <input type="hidden" name="assignment_date" value="{{ selected_date }}">
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-4">
+                                    <select name="bus_id" class="form-select" required>
+                                        <option value="">Select Bus...</option>
+                                        {% for b in buses %}
+                                        <option value="{{ b.id }}">{{ b.bus_number }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select name="route_id" class="form-select" required>
+                                        <option value="">Select Route...</option>
+                                        {% for r in routes %}
+                                        <option value="{{ r.id }}">{{ r.route_code }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="time" name="expected_departure" class="form-control" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-purple w-100 btn-sm" style="background-color: #6f42c1; color: white;">Assign Bus to Route</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h5 class="mb-3">Driver -> Bus</h5>
+        <div class="table-responsive bg-white p-4 rounded shadow mb-5">
+            <table class="table table-sm table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Driver</th>
+                        <th>Bus</th>
+                        <th>Time Slot</th>
+                        <th>Status</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if driver_assignments %}
+                        {% for a in driver_assignments %}
+                        <tr>
+                            <td>{{ a.id }}</td>
+                            <td>{{ a.driver_name }}</td>
+                            <td>{{ a.bus_number }}</td>
+                            <td>{{ a.start_time }} - {{ a.end_time }}</td>
+                            <td>{{ a.status }}</td>
+                            <td>{{ a.reason }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="6" class="text-center">No driver assignments for selected date.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <h5 class="mb-3">Bus -> Route</h5>
+        <div class="table-responsive bg-white p-4 rounded shadow">
+            <table class="table table-sm table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Bus</th>
+                        <th>Route</th>
+                        <th>Expected Departure</th>
+                        <th>Actual Departure</th>
+                        <th>Status</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if bus_assignments %}
+                        {% for a in bus_assignments %}
+                        <tr>
+                            <td>{{ a.id }}</td>
+                            <td>{{ a.bus_number }}</td>
+                            <td>{{ a.route_label }}</td>
+                            <td>{{ a.expected_departure }}</td>
+                            <td>{{ a.actual_departure }}</td>
+                            <td>{{ a.status }}</td>
+                            <td>{{ a.reason }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="7" class="text-center">No bus assignments for selected date.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

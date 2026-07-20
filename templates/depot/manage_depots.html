@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Depots</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified-theme.css') }}">
+</head>
+<body style="background-color: #ecf0f1;">
+    <div class="container mt-5">
+        <a href="{{ url_for('depot_dashboard') }}" class="btn btn-outline-secondary mb-3">← Back to Dashboard</a>
+        
+        <h1 class="mb-4">Manage Depots</h1>
+
+        <a href="{{ url_for('create_depot') }}" class="btn btn-primary mb-4">
+            <i class="fas fa-plus"></i> Create New Depot
+        </a>
+
+        <div class="row">
+            {% for depot in depots %}
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">{{ depot.name }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Location:</strong> {{ depot.location }}</p>
+                        <p><strong>City:</strong> {{ depot.city }}</p>
+                        <p><strong>Manager:</strong> {{ depot.manager_name or 'Not assigned' }}</p>
+                        <p><strong>Contact:</strong> {{ depot.contact_phone or 'N/A' }}</p>
+                        <hr>
+                        <p>
+                            <strong>Total Buses:</strong> <span style="color: #3498db; font-weight: bold;">{{ depot.total_buses }}</span>
+                        </p>
+                        <p>
+                            <strong>Total Drivers:</strong> <span style="color: #27ae60; font-weight: bold;">{{ depot.total_drivers }}</span>
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('edit_depot', depot_id=depot.id) }}" class="btn btn-sm btn-info">Edit</a>
+                        <button class="btn btn-sm btn-danger" onclick="if(confirm('Are you sure?')) window.location.href='{{ url_for('manage_depots') }}'">Delete</button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if not depots %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> No depots created yet. 
+            <a href="{{ url_for('create_depot') }}">Create the first depot</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

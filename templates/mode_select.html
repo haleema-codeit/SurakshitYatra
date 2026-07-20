@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surakshit Yatra - Mode Selection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --navy: #0f3460;
+            --green: #2e7d32;
+            --light-bg: #f8fbff;
+            --card-border: #e2e8f0;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --accent: #2563eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            background-image: url('data:image/svg+xml;utf8,<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><path d="M0,800 Q400,600 800,800 T1600,800 L1600,1000 L0,1000 Z" fill="%23e8f0fe" opacity="0.5"/></svg>');
+            background-repeat: no-repeat;
+            background-position: bottom;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            color: var(--text-dark);
+            position: relative;
+        }
+
+        .city-bg {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 250px;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .header-container {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo-container {
+            width: 135px;
+            height: 135px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .title-area h1 {
+            color: var(--navy);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .title-area p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .selection-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .selection-header h2 {
+            color: var(--navy);
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .selection-header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            max-width: 800px;
+            width: 100%;
+            margin-bottom: 3rem;
+            z-index: 10;
+        }
+
+        .mode-card {
+            background: white;
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .mode-card:hover {
+            border-color: var(--navy);
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(15, 52, 96, 0.1);
+        }
+
+        .mode-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s;
+        }
+
+        .mode-card:hover .mode-icon {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .mode-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 0.8rem;
+        }
+
+        .mode-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .mode-card.driver .badge { background: #dcfce7; color: #15803d; }
+
+        .mgmt-link-container {
+            margin-top: auto;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .mgmt-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.5);
+            border: 1px solid var(--card-border);
+        }
+
+        .mgmt-link:hover {
+            color: var(--navy);
+            border-color: var(--navy);
+            background: white;
+        }
+
+        .reset-link {
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-decoration: underline;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        @media (max-width: 600px) {
+            .mode-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        #speaker-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            color: var(--navy);
+            background: white;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            opacity: 0.4;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .pulse {
+            animation: speaker-pulse 1s infinite;
+        }
+
+        @keyframes speaker-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="city-bg">
+        <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 1440 250" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#e2e8f0" fill-opacity="0.4" d="M0,150L48,145C96,140,192,130,288,135C384,140,480,160,576,165C672,170,768,160,864,145C960,130,1056,110,1152,105C1248,100,1344,110,1392,115L1440,120L1440,250L1392,250C1344,250,1248,250,1152,250C1056,250,960,250,864,250C768,250,672,250,576,250C480,250,384,250,288,250C192,250,96,250,48,250L0,250Z"></path>
+            <rect x="50" y="80" width="40" height="170" fill="#cbd5e1" opacity="0.6"/>
+            <rect x="110" y="40" width="60" height="210" fill="#94a3b8" opacity="0.5"/>
+            <rect x="190" y="100" width="50" height="150" fill="#cbd5e1" opacity="0.6"/>
+            <rect x="1100" y="60" width="50" height="190" fill="#94a3b8" opacity="0.5"/>
+            <rect x="1180" y="30" width="70" height="220" fill="#cbd5e1" opacity="0.6"/>
+            <rect x="1280" y="90" width="45" height="160" fill="#94a3b8" opacity="0.5"/>
+        </svg>
+    </div>
+
+    <div id="speaker-indicator">
+        <i class="fa-solid fa-volume-high"></i>
+    </div>
+
+    <div class="header-container">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='logo_reference_exact.png') }}" alt="Surakshit Yatra Logo">
+        </div>
+        <div class="title-area">
+            <h1>SURAKSHIT YATRA</h1>
+            <p>Driver monitoring and management system</p>
+        </div>
+    </div>
+
+    <div class="selection-header">
+        <h2 id="page-title">Select Operation Mode</h2>
+        <p id="page-subtitle">Please choose how you want to use the system</p>
+    </div>
+
+    <div class="mode-grid">
+        <div class="mode-card driver" onclick="selectMode('driver')">
+            <div class="badge" id="driver-badge">Fleet</div>
+            <div class="mode-icon">🚌</div>
+            <div class="mode-title" id="driver-title">Driver Mode</div>
+            <p class="mode-desc" id="driver-desc">Public Transport: Buses & Fleet Vehicles. Auto-login via face recognition.</p>
+        </div>
+
+        <div class="mode-card personal" onclick="selectMode('personal')">
+            <div class="badge" id="personal-badge">Individual</div>
+            <div class="mode-icon">🚗</div>
+            <div class="mode-title" id="personal-title">Personal Mode</div>
+            <p class="mode-desc" id="personal-desc">Individual Users: Cars, Bikes, Vans. No login required.</p>
+        </div>
+    </div>
+
+    <div class="mgmt-link-container">
+        <a href="/depot/login" class="mgmt-link">
+            <i class="fa-solid fa-building-shield"></i> Smart Depot Management
+        </a>
+        <p class="reset-link" onclick="window.location.href='/api/system/reset-mode'">Change Language / Reset System</p>
+    </div>
+
+    <script>
+        const currentLang = "{{ preferred_language }}";
+        let voices = [];
+        let audioUnlocked = false;
+
+        function initVoices() {
+            voices = window.speechSynthesis.getVoices();
+            console.log("🎤 Available voices:", voices.length);
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = initVoices;
+            initVoices();
+        }
+
+        const translations = {
+            'English': {
+                title: "Select Operation Mode",
+                subtitle: "Please choose how you want to use the system",
+                driverTitle: "Driver Mode",
+                driverDesc: "Public Transport: Buses & Fleet Vehicles. Auto-login via face recognition.",
+                driverBadge: "Fleet",
+                personalTitle: "Personal Mode",
+                personalDesc: "Individual Users: Cars, Bikes, Vans. No login required.",
+                personalBadge: "Individual",
+                greeting: "Welcome back. Please select your operation mode."
+            },
+            'Hindi': {
+                title: "संचालन मोड चुनें",
+                subtitle: "कृपया चुनें कि आप सिस्टम का उपयोग कैसे करना चाहते हैं",
+                driverTitle: "ड्राइवर मोड",
+                driverDesc: "सार्वजनिक परिवहन: बसें और बेड़ा। चेहरा पहचान के माध्यम से ऑटो-लॉगिन।",
+                driverBadge: "बेड़ा",
+                personalTitle: "पर्सनल मोड",
+                personalDesc: "व्यक्तिगत उपयोगकर्ता: कार, बाइक, वैन। लॉगिन की आवश्यकता नहीं है।",
+                personalBadge: "व्यक्तिगत",
+                greeting: "स्वागतम। कृपया अपना संचालन मोड चुनें।"
+            },
+            'Tamil': {
+                title: "செயல்பாட்டு பயன்முறையைத் தேர்ந்தெடுக்கவும்",
+                subtitle: "கணினியை எவ்வாறு பயன்படுத்த விரும்புகிறீர்கள் என்பதைத் தேர்ந்தெடுக்கவும்",
+                driverTitle: "டிரைவர் முறை",
+                driverDesc: "பொது போக்குவரத்து: பேருந்துகள் மற்றும் கடற்படை வாகனங்கள். முகம் அறிதல் மூலம் தானியங்கி உள்நுழைவு.",
+                driverBadge: "கடற்படை",
+                personalTitle: "தனிப்பட்ட முறை",
+                personalDesc: "தனிப்பட்ட பயனர்கள்: கார்கள், பைக்குகள், வேன்கள். உள்நுழைவு தேவையில்லை.",
+                personalBadge: "தனிப்பட்ட",
+                greeting: "நல்வரவு. உங்கள் செயல்பாட்டு முறையைத் தேர்ந்தெடுக்கவும்."
+            },
+            'Telugu': {
+                title: "ఆపరేషన్ మోడ్‌ను ఎంచుకోండి",
+                subtitle: "మీరు సిస్టమ్‌ను ఎలా ఉపయోగించాలనుకుంటున్నారో ఎంచుకోండి",
+                driverTitle: "డ్రైవర్ మోడ్",
+                driverDesc: "పబ్లిక్ ట్రాన్స్‌పోర్ట్: బస్సులు & ఫ్లీట్ వాహనాలు. ఫేస్ రికగ్నిషన్ ద్వారా ఆటో-లాగిన్.",
+                driverBadge: "ఫ్లీట్",
+                personalTitle: "పర్సనల్ మోడ్",
+                personalDesc: "వ్యక్తిగత వినియోగదారులు: కార్లు, బైక్‌లు, వ్యాన్‌లు. లాగిన్ అవసరం లేదు.",
+                personalBadge: "వ్యక్తిగత",
+                greeting: "స్వాగతం. దయచేసి మీ ఆపరేషన్ మోడ్‌ను ఎంచుకోండి."
+            },
+            'Kannada': {
+                title: "ಕಾರ್ಯಾಚರಣೆಯ ಮೋಡ್ ಆಯ್ಕೆಮಾಡಿ",
+                subtitle: "ನೀವು ಸಿಸ್ಟಮ್ ಅನ್ನು ಹೇಗೆ ಬಳಸಲು ಬಯಸುತ್ತೀರಿ ಎಂಬುದನ್ನು ಆರಿಸಿ",
+                driverTitle: "ಚಾಲಕ ಮೋಡ್",
+                driverDesc: "ಸಾರ್ವಜನಿಕ ಸಾರಿಗೆ: ಬಸ್‌ಗಳು ಮತ್ತು ಫ್ಲೀಟ್ ವಾಹನಗಳು. ಮುಖ ಗುರುತಿಸುವಿಕೆಯ ಮೂಲಕ ಆಟೋ-ಲಾಗಿನ್.",
+                driverBadge: "ಫ್ಲೀಟ್",
+                personalTitle: "ವೈಯಕ್ತಿಕ ಮೋಡ್",
+                personalDesc: "ವೈಯಕ್ತಿಕ ಬಳಕೆದಾರರು: ಕಾರುಗಳು, ಬೈಕ್‌ಗಳು, ವ್ಯಾನ್‌ಗಳು. ಲಾಗಿನ್ ಅಗತ್ಯವಿಲ್ಲ.",
+                personalBadge: "ವೈಯಕ್ತಿಕ",
+                greeting: "ಸ್ವಾಗತ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಕಾರ್ಯಾಚರಣೆಯ ಮೋಡ್ ಆಯ್ಕೆಮಾಡಿ."
+            },
+            'Bengali': {
+                title: "অপারেশন মোড নির্বাচন করুন",
+                subtitle: "আপনি কিভাবে সিস্টেমটি ব্যবহার করতে চান তা চয়ন করুন",
+                driverTitle: "ড্রাইভার মোড",
+                driverDesc: "গণপরিবহন: বাস এবং ফ্লিট যানবাহন। মুখ চেনার মাধ্যমে অটো-লগইন।",
+                driverBadge: "ফ্লিট",
+                personalTitle: "ব্যক্তিগত মোড",
+                personalDesc: "ব্যক্তিগত ব্যবহারকারী: গাড়ি, বাইক, ভ্যান। লগইন করার প্রয়োজন নেই।",
+                personalBadge: "ব্যক্তিগত",
+                greeting: "স্বাগতম। দয়া করে আপনার অপারেশন মোড নির্বাচন করুন।"
+            }
+        };
+
+        function applyTranslations() {
+            const t = translations[currentLang] || translations['English'];
+            document.getElementById('page-title').textContent = t.title;
+            document.getElementById('page-subtitle').textContent = t.subtitle;
+            document.getElementById('driver-title').textContent = t.driverTitle;
+            document.getElementById('driver-desc').textContent = t.driverDesc;
+            document.getElementById('driver-badge').textContent = t.driverBadge;
+            document.getElementById('personal-title').textContent = t.personalTitle;
+            document.getElementById('personal-desc').textContent = t.personalDesc;
+            document.getElementById('personal-badge').textContent = t.personalBadge;
+        }
+
+        let greetingSpoken = false;
+
+        function speak(text) {
+            if (!('speechSynthesis' in window)) return;
+            const now = Date.now();
+            
+            // Aggressive unsticking for browser speech queue bugs
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            const langMap = {
+                'English': 'en-IN', 'Hindi': 'hi-IN', 'Tamil': 'ta-IN', 'Telugu': 'te-IN', 
+                'Kannada': 'kn-IN', 'Bengali': 'bn-IN'
+            };
+            const targetLang = langMap[currentLang] || 'en-US';
+            utterance.lang = targetLang;
+            
+            const voice = voices.find(v => v.lang.includes(targetLang) || v.lang.startsWith(targetLang.split('-')[0]));
+            if (voice) utterance.voice = voice;
+            
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.onstart = () => {
+                showSpeakerPulse();
+            };
+            
+            // Short timeout helps clear the queue before speaking
+            setTimeout(() => {
+                window.speechSynthesis.speak(utterance);
+            }, 50);
+        }
+
+        function triggerInitialGreeting() {
+            if (greetingSpoken) return;
+            const t = translations[currentLang] || translations['English'];
+            speak(t.greeting);
+            greetingSpoken = true;
+        }
+
+        document.body.addEventListener('click', () => {
+            if (!audioUnlocked) {
+                audioUnlocked = true;
+                const dummy = new SpeechSynthesisUtterance("");
+                window.speechSynthesis.speak(dummy);
+                triggerInitialGreeting();
+            }
+        }, { once: true });
+
+        function showSpeakerPulse() {
+            const speaker = document.getElementById('speaker-indicator');
+            if (!speaker) return;
+            speaker.style.opacity = '1';
+            speaker.classList.add('pulse');
+            setTimeout(() => {
+                speaker.classList.remove('pulse');
+                speaker.style.opacity = '0.4';
+            }, 1500);
+        }
+
+        
+        async function selectMode(mode) {
+            await fetch('/api/system/set-mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: mode })
+            });
+            if (mode === 'driver') window.location.href = '/driver/auto-login';
+            else window.location.href = '/personal/monitoring';
+        }
+
+        window.onload = () => {
+            applyTranslations();
+            // Try to speak, but most browsers will block until the first click
+            setTimeout(triggerInitialGreeting, 500);
+        };
+    </script>
+</body>
+</html>

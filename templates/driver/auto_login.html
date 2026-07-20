@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surakshit Yatra - Driver Identification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3c72;
+            --secondary: #2a5298;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg-light: #f8fafc;
+            --bg-dark: #0f172a;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Outfit', sans-serif; background: var(--bg-dark); color: white; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+
+        /* Top Header */
+        .app-header {
+            background: var(--bg-dark);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .logo-group { display: flex; align-items: center; gap: 1rem; }
+        .logo-icon { width: 40px; height: 40px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.5rem; font-weight: 800; }
+        .logo-text h2 { font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; }
+        .logo-text p { font-size: 0.75rem; opacity: 0.7; }
+        
+        .header-center h1 { font-size: 1.2rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .header-right { display: flex; align-items: center; gap: 1.5rem; }
+        .lang-selector { display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; cursor: pointer; }
+        .datetime { text-align: right; font-size: 0.85rem; }
+        .datetime .time { font-weight: 700; font-size: 1rem; }
+
+        /* Stepper */
+        .stepper-container { background: white; padding: 1.5rem 2rem; display: flex; justify-content: center; border-bottom: 1px solid var(--border); }
+        .stepper { display: flex; align-items: center; gap: 2rem; max-width: 1000px; width: 100%; justify-content: space-between; }
+        .step { display: flex; align-items: center; gap: 0.8rem; color: var(--text-muted); opacity: 0.5; transition: 0.3s; }
+        .step.active { color: var(--primary); opacity: 1; }
+        .step.completed { color: var(--accent); opacity: 1; }
+        .step-num { width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+        .step.active .step-num { background: var(--primary); color: white; box-shadow: 0 0 0 4px rgba(30, 60, 114, 0.1); }
+        .step.completed .step-num { background: var(--accent); color: white; }
+        .step-info h4 { font-size: 0.85rem; font-weight: 700; }
+        .step-info p { font-size: 0.75rem; }
+        .step-divider { flex: 1; height: 1px; background: var(--border); max-width: 40px; }
+
+        /* Main Grid */
+        .main-content { flex: 1; padding: 1.5rem 2rem; background: var(--bg-light); color: var(--text-main); }
+        .identification-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; max-width: 1200px; margin: 0 auto; }
+
+        /* Camera Feed */
+        .camera-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--border); position: relative; }
+        .camera-container { width: 100%; aspect-ratio: 16/10; background: #000; position: relative; }
+        #video { width: 100%; height: 100%; object-fit: cover; }
+        .live-badge { position: absolute; top: 1.5rem; left: 1.5rem; background: #10b981; color: white; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.75rem; font-weight: 800; letter-spacing: 1px; }
+        .scanning-overlay { position: absolute; bottom: 0; left: 0; width: 100%; height: 80px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; gap: 1rem; color: white; transition: 0.3s; }
+        .scan-anim { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Status Cards */
+        .status-sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+        .stat-card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--border); }
+        .card-title { font-size: 0.85rem; font-weight: 800; color: var(--text-main); text-transform: uppercase; margin-bottom: 1.5rem; letter-spacing: 0.5px; }
+        
+        /* Circular Progress */
+        .match-circle { width: 180px; height: 180px; margin: 0 auto 1.5rem; position: relative; display: flex; align-items: center; justify-content: center; }
+        .circle-svg { transform: rotate(-90deg); }
+        .circle-bg { fill: none; stroke: #f1f5f9; stroke-width: 12; }
+        .circle-bar { fill: none; stroke: var(--accent); stroke-width: 12; stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 440; transition: stroke-dashoffset 1s ease-out; }
+        .match-value { position: absolute; text-align: center; }
+        .match-value .percent { font-size: 2.2rem; font-weight: 800; color: var(--text-main); display: block; }
+        .match-value .label { font-size: 0.8rem; font-weight: 600; color: var(--accent); }
+        .match-desc { text-align: center; font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; }
+
+        /* Confidence Bar */
+        .confidence-box { margin-top: 1rem; }
+        .bar-labels { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600; }
+        .progress-track { height: 16px; background: #f1f5f9; border-radius: 8px; overflow: hidden; margin-bottom: 0.8rem; }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #10b981, #34d399); transition: width 1s ease-out; }
+        .confidence-text { text-align: center; font-weight: 700; color: var(--accent); font-size: 0.95rem; }
+
+        /* Driver Details (Initialy Hidden) */
+        .details-section { grid-column: span 2; background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--border); display: none; }
+        .details-section.active { display: block; animation: slideUp 0.5s ease-out; }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .driver-info-grid { display: grid; grid-template-columns: 200px 1fr 300px; gap: 2rem; }
+        .matched-photo { width: 100%; aspect-ratio: 1/1.2; border-radius: 8px; object-fit: cover; border: 4px solid #f1f5f9; }
+        .info-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .field { margin-bottom: 0.8rem; }
+        .field label { display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 0.2rem; }
+        .field .value { font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
+        
+        .match-results-table { font-size: 0.85rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .table-row { display: flex; justify-content: space-between; padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); }
+        .table-row:last-child { border-bottom: none; }
+        .table-row .label { color: var(--text-muted); font-weight: 600; }
+        .table-row .value { color: var(--text-main); font-weight: 700; }
+
+        /* Loading Assignment */
+        .assignment-section { grid-column: span 2; background: white; border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--border); display: none; }
+        .assignment-section.active { display: block; }
+        .flow-stepper { display: flex; justify-content: space-around; align-items: center; position: relative; margin-top: 2rem; }
+        .flow-step { text-align: center; z-index: 1; }
+        .flow-icon { width: 60px; height: 60px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 0.8rem; transition: 0.3s; }
+        .flow-step.active .flow-icon { background: #dcfce7; color: var(--accent); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
+        .flow-step.completed .flow-icon { background: var(--accent); color: white; }
+        .flow-label { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); }
+        .flow-step.active .flow-label { color: var(--text-main); }
+        .flow-line { position: absolute; top: 30px; left: 10%; right: 10%; height: 2px; background: #f1f5f9; z-index: 0; }
+        .flow-line-progress { position: absolute; top: 0; left: 0; width: 0%; height: 100%; background: var(--accent); transition: 0.5s; }
+
+        /* Footer */
+        .app-footer { background: white; padding: 1rem 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .btn { padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 700; font-family: inherit; cursor: pointer; transition: 0.3s; border: 1px solid transparent; }
+        .btn-back { background: #f1f5f9; color: var(--text-main); }
+        .btn-cancel { background: transparent; color: var(--text-muted); border-color: var(--border); }
+        .btn-primary { background: var(--primary); color: white; min-width: 250px; }
+        .btn-primary:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        .bottom-bar { background: var(--bg-dark); padding: 0.6rem 2rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: rgba(255,255,255,0.6); }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); display: inline-block; margin-right: 5px; }
+
+        /* Instruction Box */
+        .instruction-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1rem; display: flex; gap: 1rem; align-items: center; margin-top: 1rem; color: #1e40af; }
+        .instruction-icon { font-size: 1.5rem; }
+        .instruction-text h5 { font-size: 0.9rem; font-weight: 800; }
+        .instruction-text p { font-size: 0.85rem; opacity: 0.9; }
+
+        canvas { display: none; }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="logo-group">
+            <div class="logo-icon">
+                <img src="{{ url_for('static', filename='logo_icon.png') }}" alt="Logo" style="width: 80%; height: 80%; object-fit: contain;">
+            </div>
+            <div class="logo-text">
+                <h2 data-i18n="APP_NAME">SURAKSHIT YATRA</h2>
+                <p data-i18n="APP_SUBTITLE">Management & Driver Safety System</p>
+            </div>
+        </div>
+        <div class="header-center">
+            <h1 data-i18n="FACE_ID_TITLE">DRIVER MODE – FACE IDENTIFICATION</h1>
+        </div>
+        <div class="header-right">
+            <div class="lang-selector">
+                🌐 <span id="current-lang-name">English</span> ▾
+            </div>
+            <div class="datetime">
+                <div class="time" id="current-time">10:30 AM</div>
+                <div class="date" id="current-date">21 May 2024</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="stepper-container">
+        <div class="stepper">
+            <div class="step active" id="step-1">
+                <div class="step-num">1</div>
+                <div class="step-info">
+                    <h4>Face Detection</h4>
+                    <p id="step-1-sub">Capturing Image</p>
+                </div>
+            </div>
+            <div class="step-divider"></div>
+            <div class="step" id="step-2">
+                <div class="step-num">2</div>
+                <div class="step-info">
+                    <h4>Face Matching</h4>
+                    <p>Matching with Database</p>
+                </div>
+            </div>
+            <div class="step-divider"></div>
+            <div class="step" id="step-3">
+                <div class="step-num">3</div>
+                <div class="step-info">
+                    <h4>Driver Identified</h4>
+                    <p>Fetching Driver Details</p>
+                </div>
+            </div>
+            <div class="step-divider"></div>
+            <div class="step" id="step-4">
+                <div class="step-num">4</div>
+                <div class="step-info">
+                    <h4>Assignment Loaded</h4>
+                    <p>Ready to Start Monitoring</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <div class="identification-grid">
+            <div class="camera-section">
+                <div class="camera-card">
+                    <div class="camera-container">
+                        <div class="live-badge">LIVE</div>
+                        <video id="video" autoplay playsinline muted></video>
+                        <div class="scanning-overlay" id="scanning-overlay">
+                            <div class="scan-anim"></div>
+                            <span id="scan-text">Capturing Image...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="instruction-box">
+                    <div class="instruction-icon">💡</div>
+                    <div class="instruction-text">
+                        <h5>Instructions</h5>
+                        <p>Please look straight at the camera and ensure your face is clearly visible.</p>
+                    </div>
+                </div>
+
+                <!-- Manual Fallback Button -->
+                <div style="margin-top: 1rem; text-align: center;">
+                    <a href="{{ url_for('driver_login_photo') }}" class="btn btn-outline" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem; text-decoration: none; color: var(--text-dark);">
+                        <span style="font-size: 1.2rem;">👆</span> Select Driver Manually
+                    </a>
+                </div>
+            </div>
+
+            <div class="status-sidebar">
+                <div class="stat-card">
+                    <div class="card-title">IDENTIFICATION STATUS</div>
+                    <div class="match-circle">
+                        <svg class="circle-svg" width="180" height="180">
+                            <circle class="circle-bg" cx="90" cy="90" r="70"></circle>
+                            <circle class="circle-bar" id="match-progress" cx="90" cy="90" r="70"></circle>
+                        </svg>
+                        <div class="match-value">
+                            <span class="percent" id="match-percent">0%</span>
+                            <span class="label" id="match-status">Scanning...</span>
+                        </div>
+                    </div>
+                    <p class="match-desc" id="match-desc">Comparing with database...<br>Please wait</p>
+                </div>
+
+                <div class="stat-card">
+                    <div class="card-title">VERIFICATION CONFIDENCE</div>
+                    <div class="confidence-box">
+                        <div class="bar-labels">
+                            <span>0%</span>
+                            <span>50%</span>
+                            <span>100%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="confidence-fill"></div>
+                        </div>
+                        <div class="confidence-text" id="confidence-label">Waiting for match...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section" id="driver-details">
+                <div class="card-title">MATCHED DRIVER DETAILS <span style="background: #dcfce7; color: var(--accent); padding: 0.2rem 0.6rem; border-radius: 4px; margin-left: 10px; font-size: 0.7rem;">CONFIRMED</span></div>
+                <div class="driver-info-grid">
+                    <div style="position: relative;">
+                        <img src="" id="driver-photo" class="matched-photo" alt="Driver">
+                        <div style="position: absolute; bottom: 10px; right: 10px; background: var(--accent); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">✓</div>
+                    </div>
+                    <div class="info-fields">
+                        <div class="field">
+                            <label>Driver Name</label>
+                            <div class="value" id="info-name">Arun Kumar</div>
+                        </div>
+                        <div class="field">
+                            <label>Driver ID</label>
+                            <div class="value" id="info-id">DRV202400125</div>
+                        </div>
+                        <div class="field">
+                            <label>Phone Number</label>
+                            <div class="value" id="info-phone">+91 98765 43210</div>
+                        </div>
+                        <div class="field">
+                            <label>License Number</label>
+                            <div class="value" id="info-license">TN09 2016 1234567</div>
+                        </div>
+                    </div>
+                    <div class="match-results-card">
+                        <div class="match-results-table">
+                            <div class="table-row">
+                                <span class="label">Captured Image</span>
+                                <span class="value" id="res-time-capture">10:30:15 AM</span>
+                            </div>
+                            <div class="table-row">
+                                <span class="label">Matched Image</span>
+                                <span class="value" id="res-time-match">10:30:16 AM</span>
+                            </div>
+                            <div class="table-row">
+                                <span class="label">Match Score</span>
+                                <span class="value" id="res-score">92%</span>
+                            </div>
+                            <div class="table-row">
+                                <span class="label">Status</span>
+                                <span class="value" style="color: var(--accent);">Verified</span>
+                            </div>
+                            <div class="table-row">
+                                <span class="label">Database</span>
+                                <span class="value">Drivers_DB</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-cancel" style="width: 100%; margin-top: 1rem; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            👥 View All Matches
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="assignment-section" id="assignment-section">
+                <div class="card-title">NEXT STEP: LOADING ASSIGNMENT</div>
+                <div class="flow-stepper">
+                    <div class="flow-line">
+                        <div class="flow-line-progress" id="flow-progress"></div>
+                    </div>
+                    <div class="flow-step completed">
+                        <div class="flow-icon">👨‍✈️</div>
+                        <div class="flow-label">Driver Verified</div>
+                    </div>
+                    <div class="flow-step" id="flow-step-2">
+                        <div class="flow-icon">🚌</div>
+                        <div class="flow-label">Fetching Assignment</div>
+                    </div>
+                    <div class="flow-step" id="flow-step-3">
+                        <div class="flow-icon">📋</div>
+                        <div class="flow-label">Loading Details</div>
+                    </div>
+                    <div class="flow-step" id="flow-step-4">
+                        <div class="flow-icon">✅</div>
+                        <div class="flow-label">Ready</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <button class="btn btn-back" onclick="window.location.href='/mode-select'">← Back</button>
+        <button class="btn btn-cancel" onclick="window.location.href='/api/system/reset-mode'">✕ Cancel Identification</button>
+        <button class="btn btn-primary" id="proceed-btn" disabled onclick="window.location.href='/driver/monitoring'">Proceed to Assignment →</button>
+    </footer>
+
+    <div class="bottom-bar">
+        <div class="legal">🛡️ Your safety is our priority. Drive safe!</div>
+        <div class="system-info">
+            System ID: STMS-DRV-00125 &nbsp; | &nbsp; <span class="status-dot"></span> Online
+        </div>
+    </div>
+
+    <canvas id="canvas" width="640" height="480"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const proceedBtn = document.getElementById('proceed-btn');
+        const preferredLanguage = "{{ session.get('preferred_language', 'English') }}";
+        let isIdentifying = false;
+        let attempts = 0;
+        let audioContext = null;
+        let audioUnlocked = false;
+        
+        // UI Elements for updates
+        const matchPercentEl = document.getElementById('match-percent');
+        const matchProgressEl = document.getElementById('match-progress');
+        const matchStatusEl = document.getElementById('match-status');
+        const matchDescEl = document.getElementById('match-desc');
+        const confidenceFillEl = document.getElementById('confidence-fill');
+        const confidenceLabelEl = document.getElementById('confidence-label');
+
+        const translations = {
+            'English': {
+                welcome: "Welcome back, {name}. Identity verified. Fetching your assignment.",
+                loading: "Loading assignment. Please wait.",
+                ready: "Assignment loaded. Starting safety monitoring now. Drive safe.",
+                denied: "Access denied. Face not recognized. Please adjust your position and retry.",
+                no_face: "No face detected. Please look directly at the camera and ensure good lighting.",
+                retry: "Still analyzing. Please keep looking at the camera.",
+                identifying: "Identifying driver. Please wait."
+            },
+            'Hindi': {
+                welcome: "वापसी पर स्वागत है, {name}। आपकी पहचान सत्यापित हो गई है। असाइनमेंट प्राप्त किया जा रहा है।",
+                loading: "असाइनमेंट लोड हो रहा है। कृपया प्रतीक्षा करें।",
+                ready: "असाइनमेंट लोड हो गया। सुरक्षा निगरानी शुरू हो रही है। सुरक्षित ड्राइव करें।",
+                denied: "पहुंच अस्वीकार। चेहरा पहचाना नहीं गया। कृपया अपनी स्थिति बदलें और पुन: प्रयास करें।",
+                no_face: "कोई चेहरा नहीं मिला। कृपया कैमरे की ओर सीधे देखें और रोशनी सुनिश्चित करें।",
+                retry: "अभी भी विश्लेषण जारी है। कृपया कैमरे की ओर देखते रहें।",
+                identifying: "ड्राइवर की पहचान की जा रही है।"
+            },
+            'Tamil': {
+                welcome: "நல்வரவு, {name}. உங்கள் அடையாளம் சரிபார்க்கப்பட்டது. உங்கள் ஒதுக்கீடு பெறப்படுகிறது.",
+                loading: "ஒதுக்கீடு ஏற்றப்படுகிறது. தயவுசெய்து காத்திருக்கவும்.",
+                ready: "ஒதுக்கீடு ஏற்றப்பட்டது. பாதுகாப்பு கண்காணிப்பு தொடங்குகிறது. பாதுகாப்பாக ஓட்டவும்.",
+                denied: "அனுமதி மறுக்கப்பட்டது. முகம் அடையாளம் காணப்படவில்லை. தயவுசெய்து உங்கள் நிலையைச் சரிசெய்து மீண்டும் முயற்சிக்கவும்.",
+                no_face: "முகம் கண்டறியப்படவில்லை. கேமராவை நேரடியாகப் பார்த்து போதுமான வெளிச்சத்தை உறுதி செய்யவும்.",
+                retry: "பகுப்பாய்வு தொடர்கிறது. கேமராவைத் தொடர்ந்து பார்க்கவும்.",
+                identifying: "ஓட்டுநர் அடையாளம் காணப்படுகிறார்."
+            },
+            'Telugu': {
+                welcome: "స్వాగతం, {name}. మీ గుర్తింపు ధృవీకరించబడింది. అసైన్‌మెంట్ వివరాలు సేకరించబడుతున్నాయి.",
+                loading: "అసైన్‌మెంట్ లోడ్ అవుతోంది. దయచేసి వేచి ఉండండి.",
+                ready: "అసైన్‌మెంట్ లోడ్ అయింది. భద్రతా పర్యవేక్షణ ప్రారంభమవుతోంది. సురక్షితంగా డ్రైవ్ చేయండి.",
+                denied: "అనుమతి నిరాకరించబడింది. ముఖం గుర్తించబడలేదు. మళ్ళీ ప్రయత్నించండి.",
+                no_face: "ముఖం గుర్తించబడలేదు. నేరుగా కెమెరా వైపు చూడండి.",
+                retry: "విశ్లేషణ జరుగుతోంది. కెమెరా వైపు చూస్తూనే ఉండండి.",
+                identifying: "డ్రైవర్ గుర్తింపు ప్రక్రియ జరుగుతోంది."
+            },
+            'Kannada': {
+                welcome: "ಸ್ವಾಗತ, {name}. ನಿಮ್ಮ ಗುರುತನ್ನು ಪರಿಶೀಲಿಸಲಾಗಿದೆ. ನಿಯೋಜನೆಯನ್ನು ಪಡೆಯಲಾಗುತ್ತಿದೆ.",
+                loading: "ನಿಯೋಜನೆಯನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ. ದಯವಿಟ್ಟು ಕಾಯಿರಿ.",
+                ready: "ನಿಯೋಜನೆ ಲೋಡ್ ಆಗಿದೆ. ಸುರಕ್ಷತಾ ಮೇಲ್ವಿಚಾರಣೆ ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ. ಸುರಕ್ಷಿತವಾಗಿ ಚಾಲನೆ ಮಾಡಿ.",
+                denied: "ಪ್ರವೇಶ ನಿರಾಕರಿಸಲಾಗಿದೆ. ಮುಖ ಗುರುತಿಸಲಾಗಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+                no_face: "ಮುಖ ಪತ್ತೆಯಾಗಿಲ್ಲ. ದಯವಿಟ್ಟು ನೇರವಾಗಿ ಕ್ಯಾಮೆರಾವನ್ನು ನೋಡಿ.",
+                retry: "ವಿಶ್ಲೇಷಣೆ ನಡೆಯುತ್ತಿದೆ. ಕ್ಯಾಮೆರಾವನ್ನು ನೋಡುತ್ತಲೇ ಇರಿ.",
+                identifying: "ಚಾಲಕನ ಗುರುತಿಸುವಿಕೆ ನಡೆಯುತ್ತಿದೆ."
+            }
+        };
+
+        const langMap = {
+            'English': 'en-IN', 'Hindi': 'hi-IN', 'Tamil': 'ta-IN', 'Telugu': 'te-IN', 
+            'Kannada': 'kn-IN'
+        };
+
+        function initAudioContext() {
+            if (audioContext) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            audioContext = new AudioContext();
+            console.log("Audio Context Initialized");
+        }
+
+        // Resume audio on any user interaction
+        document.addEventListener('click', () => {
+            initAudioContext();
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            if (!audioUnlocked) {
+                audioUnlocked = true;
+                const dummy = new SpeechSynthesisUtterance("");
+                window.speechSynthesis.speak(dummy);
+            }
+        }, { once: false });
+
+        let lastSpokenText = '';
+        let lastSpokenTime = 0;
+
+        function speak(textKey, name = '') {
+            if (!('speechSynthesis' in window)) return;
+            
+            initAudioContext();
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            const lang = preferredLanguage || 'English';
+            let text = translations[lang]?.[textKey] || translations['English'][textKey];
+            if (name) text = text.replace('{name}', name);
+            
+            // Throttle duplicate messages unless it's a critical one
+            if (text === lastSpokenText && (Date.now() - lastSpokenTime) < 5000 && textKey !== 'welcome') return;
+
+            // Stop current speech to prioritize new message
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = langMap[lang] || 'en-IN';
+            utterance.rate = 1.0;
+            
+            utterance.onstart = () => {
+                lastSpokenText = text;
+                lastSpokenTime = Date.now();
+            };
+
+            setTimeout(() => {
+                window.speechSynthesis.speak(utterance);
+            }, 100);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('current-date').textContent = now.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        document.getElementById('current-lang-name').textContent = preferredLanguage;
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: 640, height: 480 } 
+                });
+                video.srcObject = stream;
+                startIdentification();
+            } catch (err) {
+                console.error("Camera error:", err);
+            }
+        }
+
+        async function startIdentification() {
+            if (isIdentifying) return;
+            isIdentifying = true;
+            
+            while (true) {
+                attempts++;
+                try {
+                    const context = canvas.getContext('2d');
+                    context.drawImage(video, 0, 0, 640, 480);
+                    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.8));
+                    const formData = new FormData();
+                    formData.append('frame', blob);
+                    
+                    const response = await fetch('/api/driver/identify', { method: 'POST', body: formData });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        onSuccess(data);
+                        break;
+                    } else {
+                        const simulatedProgress = Math.min(attempts * 5, 45);
+                        updateMatchUI(simulatedProgress, "Analyzing...");
+                        
+                        // Give voice feedback every few attempts if still failing
+                        if (attempts % 3 === 0) {
+                            if (data.message && data.message.includes("No face")) {
+                                speak('no_face');
+                            } else {
+                                speak('retry');
+                            }
+                        }
+                    }
+                } catch (err) { console.error(err); }
+                await new Promise(r => setTimeout(r, 2000));
+            }
+        }
+
+        function updateMatchUI(percent, status) {
+            const p = Math.round(percent);
+            matchPercentEl.textContent = p + "%";
+            const offset = 440 - (440 * p) / 100;
+            matchProgressEl.style.strokeDashoffset = offset;
+            matchStatusEl.textContent = status;
+            confidenceFillEl.style.width = p + "%";
+            if (p > 70) {
+                confidenceLabelEl.textContent = p + "% High Confidence";
+                confidenceLabelEl.style.color = "var(--accent)";
+            }
+        }
+
+        function onSuccess(data) {
+            document.getElementById('step-1').classList.remove('active');
+            document.getElementById('step-1').classList.add('completed');
+            document.getElementById('step-2').classList.add('completed');
+            document.getElementById('step-3').classList.add('active');
+            
+            const finalScore = Math.round(data.confidence * 100);
+            updateMatchUI(finalScore, "Match Found");
+            
+            speak('welcome', data.driver_name);
+            
+            document.getElementById('info-name').textContent = data.driver_name;
+            document.getElementById('info-id').textContent = "DRV-" + String(data.driver_id).padStart(5, '0');
+            document.getElementById('res-score').textContent = finalScore + "%";
+            
+            const nowTime = new Date().toLocaleTimeString();
+            document.getElementById('res-time-capture').textContent = nowTime;
+            document.getElementById('res-time-match').textContent = nowTime;
+            
+            // Show identified photo
+            if (data.photo_url) {
+                document.getElementById('driver-photo').src = data.photo_url;
+            }
+            
+            document.getElementById('driver-details').classList.add('active');
+            document.getElementById('scanning-overlay').style.opacity = '0';
+            
+            // INCREASED DELAY: Give the welcome message time to complete before starting the loading sequence
+            setTimeout(() => {
+                document.getElementById('assignment-section').classList.add('active');
+                speak('loading');
+                runAssignmentSequence();
+            }, 3500);
+        }
+
+        function runAssignmentSequence() {
+            const progress = document.getElementById('flow-progress');
+            const steps = [
+                { el: 'flow-step-2', p: 33 },
+                { el: 'flow-step-3', p: 66 },
+                { el: 'flow-step-4', p: 100 }
+            ];
+
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i >= steps.length) {
+                    clearInterval(interval);
+                    document.getElementById('step-3').classList.remove('active');
+                    document.getElementById('step-3').classList.add('completed');
+                    document.getElementById('step-4').classList.add('active');
+                    
+                    speak('ready');
+                    
+                    setTimeout(() => {
+                        window.location.href = '/driver/monitoring';
+                    }, 1500);
+                    return;
+                }
+                
+                const step = steps[i];
+                document.getElementById(step.el).classList.add('active');
+                progress.style.width = step.p + "%";
+                if (i > 0) {
+                    document.getElementById(steps[i-1].el).classList.remove('active');
+                    document.getElementById(steps[i-1].el).classList.add('completed');
+                }
+                i++;
+            }, 1500);
+        }
+
+        window.onload = initCamera;
+    </script>
+</body>
+</html>

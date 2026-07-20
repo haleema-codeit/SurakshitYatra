@@ -1,0 +1,788 @@
+s<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Duty — Surakshit Yatra</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ---- Header ---- */
+        .duty-header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .duty-header .driver-intro {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .driver-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: rgba(249, 115, 22, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: #f97316;
+            border: 2px solid rgba(249, 115, 22, 0.4);
+        }
+
+        .driver-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .duty-header h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .duty-header .date-badge {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 0.15rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .header-actions a {
+            padding: 0.5rem 1.1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-monitor {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-monitor:hover {
+            background: rgba(59, 130, 246, 0.3);
+            color: white;
+        }
+
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.25);
+            color: white;
+        }
+
+        /* ---- Status Banner ---- */
+        .status-banner {
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .status-banner.ready {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05));
+            color: #4f46e5;
+            border-bottom: 2px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .status-banner.on-duty {
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.05));
+            color: #059669;
+            border-bottom: 2px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .status-banner.no-assignment {
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+            color: #d97706;
+            border-bottom: 2px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .status-pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-pulse.ready {
+            background: #6366f1;
+        }
+
+        .status-pulse.on-duty {
+            background: #10b981;
+        }
+
+        .status-pulse.no-assignment {
+            background: #f59e0b;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 currentColor;
+                opacity: 1;
+            }
+
+            50% {
+                box-shadow: 0 0 0 8px transparent;
+                opacity: 0.7;
+            }
+        }
+
+        /* ---- Main Grid ---- */
+        .duty-grid {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .duty-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ---- Cards ---- */
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .card-head {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1e293b;
+        }
+
+        .card-head i {
+            color: #f97316;
+            font-size: 0.95rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* ---- Assignment Details ---- */
+        .assignment-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .detail-item {
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .detail-item .label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #94a3b8;
+            margin-bottom: 0.35rem;
+        }
+
+        .detail-item .value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .detail-item .value.highlight {
+            color: #f97316;
+        }
+
+        .detail-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* ---- Action Button ---- */
+        .duty-action {
+            padding: 1.5rem;
+        }
+
+        .duty-btn {
+            width: 100%;
+            padding: 1.1rem;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        .duty-btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-start-duty {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-start-duty:hover {
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+            transform: translateY(-2px);
+        }
+
+        .btn-end-duty {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-end-duty:hover {
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
+            transform: translateY(-2px);
+        }
+
+        .btn-disabled {
+            background: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* ---- Summary Panel ---- */
+        .summary-stat {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .summary-stat:last-child {
+            border-bottom: none;
+        }
+
+        .summary-stat .s-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .summary-stat .s-value {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #1e293b;
+        }
+
+        .summary-stat .s-value.green {
+            color: #10b981;
+        }
+
+        .summary-stat .s-value.blue {
+            color: #3b82f6;
+        }
+
+        .summary-stat .s-value.orange {
+            color: #f97316;
+        }
+
+        /* ---- Completed Trips ---- */
+        .trip-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .trip-item:last-child {
+            border-bottom: none;
+        }
+
+        .trip-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(6, 182, 212, 0.1);
+            color: #06b6d4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+
+        .trip-info span {
+            display: block;
+        }
+
+        .trip-info .trip-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1e293b;
+        }
+
+        .trip-info .trip-time {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        /* ---- No Assignment State ---- */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.15rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            max-width: 320px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        /* ---- Flash Messages ---- */
+        .flash-msg {
+            padding: 1rem 2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .flash-msg.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #065f46;
+            border-bottom: 2px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .flash-msg.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #991b1b;
+            border-bottom: 2px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* ---- Current Time ---- */
+        .live-clock {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 0.15rem;
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified-theme.css') }}">
+</head>
+
+<body>
+    <!-- Header -->
+    <div class="duty-header">
+        <div class="driver-intro">
+            <div class="driver-avatar">
+                {% if driver.photo_filename %}
+                <img src="{{ url_for('static', filename='uploads/drivers/' + driver.photo_filename) }}"
+                    alt="{{ driver.name }}">
+                {% else %}
+                <i class="fas fa-user"></i>
+                {% endif %}
+            </div>
+            <div>
+                <h1>{{ driver.name }}</h1>
+                <div class="date-badge">
+                    <i class="fas fa-calendar-day"></i>
+                    {{ today.strftime('%A, %d %B %Y') }}
+                </div>
+                <div class="live-clock" id="liveClock"></div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('driver_monitoring', driver_id=driver.id) }}" class="btn-monitor">
+                <i class="fas fa-video"></i> Monitoring
+            </a>
+            <a href="{{ url_for('driver_logout') }}" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% for message in get_flashed_messages(category_filter=['success']) %}
+    <div class="flash-msg success">
+        <i class="fas fa-check-circle"></i> {{ message }}
+    </div>
+    {% endfor %}
+    {% for message in get_flashed_messages(category_filter=['error']) %}
+    <div class="flash-msg error">
+        <i class="fas fa-exclamation-circle"></i> {{ message }}
+    </div>
+    {% endfor %}
+
+    <!-- Status Banner -->
+    {% if duty_state == 'ready' %}
+    <div class="status-banner ready">
+        <div class="status-pulse ready"></div>
+        Assignment ready — tap Start Duty when you're at the depot
+    </div>
+    {% elif duty_state == 'on_duty' %}
+    <div class="status-banner on-duty">
+        <div class="status-pulse on-duty"></div>
+        You are currently ON DUTY — drive safely
+    </div>
+    {% else %}
+    <div class="status-banner no-assignment">
+        <div class="status-pulse no-assignment"></div>
+        No assignment for today — check back later
+    </div>
+    {% endif %}
+
+    <!-- Main Grid -->
+    <div class="duty-grid">
+        <!-- Left Column -->
+        <div>
+            {% if assignment %}
+            <!-- Assignment Details Card -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div class="card-head">
+                    <i class="fas fa-clipboard-list"></i> Today's Assignment
+                </div>
+                <div class="card-body">
+                    <div class="assignment-grid">
+                        <div class="detail-item">
+                            <div class="label">Bus Number</div>
+                            <div class="value highlight">{{ bus.bus_number if bus else 'N/A' }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">License Plate</div>
+                            <div class="value">{{ bus.license_plate if bus else 'N/A' }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Route</div>
+                            <div class="value">{{ route.route_name if route else 'Not assigned' }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Route Code</div>
+                            <div class="value">{{ route.route_code if route else '—' }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Shift Timing</div>
+                            <div class="value">{{ assignment.start_time }} — {{ assignment.end_time }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Shift Type</div>
+                            <div class="value">{{ shift.shift_type if shift else 'General' }}</div>
+                        </div>
+                        {% if route %}
+                        <div class="detail-item">
+                            <div class="label">Route Distance</div>
+                            <div class="value">{{ route.distance_km }} km</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Estimated Duration</div>
+                            <div class="value">{{ route.estimated_duration_minutes }} min</div>
+                        </div>
+                        {% endif %}
+                        <div class="detail-item full-width">
+                            <div class="label">Assignment Status</div>
+                            <div class="value"
+                                style="color: {% if assignment.status == 'In Progress' %}#10b981{% else %}#6366f1{% endif %};">
+                                {{ assignment.status }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="duty-action">
+                    {% if duty_state == 'ready' %}
+                    <form method="POST" action="{{ url_for('driver_start_duty') }}"
+                        onsubmit="return confirm('Are you ready to start your duty?');">
+                        <button type="submit" class="duty-btn btn-start-duty">
+                            <i class="fas fa-play-circle"></i> START DUTY
+                        </button>
+                    </form>
+                    {% elif duty_state == 'on_duty' %}
+                    <form method="POST" action="{{ url_for('driver_end_duty') }}"
+                        onsubmit="return confirm('Are you sure you want to end your duty?');">
+                        <button type="submit" class="duty-btn btn-end-duty">
+                            <i class="fas fa-stop-circle"></i> END DUTY
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Route Info (if available) -->
+            {% if route %}
+            <div class="card">
+                <div class="card-head">
+                    <i class="fas fa-route"></i> Route Details
+                </div>
+                <div class="card-body">
+                    <div class="assignment-grid">
+                        <div class="detail-item">
+                            <div class="label">From</div>
+                            <div class="value">{{ route.start_point }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">To</div>
+                            <div class="value">{{ route.end_point }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Demand Level</div>
+                            <div class="value"
+                                style="color: {% if route.demand_level == 'High' %}#ef4444{% elif route.demand_level == 'Peak' %}#dc2626{% elif route.demand_level == 'Medium' %}#f59e0b{% else %}#10b981{% endif %};">
+                                {{ route.demand_level }}
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Bus Capacity</div>
+                            <div class="value">{{ bus.capacity if bus else '—' }} seats</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- No Assignment -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-xmark"></i>
+                        <h3>No Assignment Today</h3>
+                        <p>You don't have any bus assignment for today. Contact your depot manager if you believe this
+                            is an error.</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column — Summary -->
+        <div>
+            <!-- Today's Summary -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div class="card-head">
+                    <i class="fas fa-chart-pie"></i> Today's Summary
+                </div>
+                <div class="card-body">
+                    <div class="summary-stat">
+                        <span class="s-label"><i class="fas fa-clock"></i> Hours Worked</span>
+                        <span class="s-value blue">{{ total_hours_today }}h</span>
+                    </div>
+                    <div class="summary-stat">
+                        <span class="s-label"><i class="fas fa-check-double"></i> Trips Completed</span>
+                        <span class="s-value green">{{ completed_today | length }}</span>
+                    </div>
+                    <div class="summary-stat">
+                        <span class="s-label"><i class="fas fa-id-badge"></i> License</span>
+                        <span class="s-value" style="font-size: 0.95rem;">{{ driver.license_number }}</span>
+                    </div>
+                    <div class="summary-stat">
+                        <span class="s-label"><i class="fas fa-phone"></i> Contact</span>
+                        <span class="s-value" style="font-size: 0.95rem;">{{ driver.phone or '—' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed Trips Today -->
+            <div class="card">
+                <div class="card-head">
+                    <i class="fas fa-history"></i> Completed Trips
+                </div>
+                <div class="card-body">
+                    {% if completed_today %}
+                    {% for trip in completed_today %}
+                    <div class="trip-item">
+                        <div class="trip-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="trip-info">
+                            <span class="trip-name">Bus Assignment #{{ trip.id }}</span>
+                            <span class="trip-time">{{ trip.start_time }} — {{ trip.end_time }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+                        <i class="fas fa-inbox" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i>
+                        No completed trips yet today
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const trackingBusId = {{ bus.id if bus else 'null' }};
+        const trackingDutyState = '{{ duty_state }}';
+        let gpsWatchId = null;
+
+        function sendLocationUpdate(position) {
+            if (!trackingBusId) return;
+
+            const payload = {
+                bus_id: trackingBusId,
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                speed: position.coords.speed,
+                altitude: position.coords.altitude,
+                accuracy: position.coords.accuracy,
+                heading: position.coords.heading,
+                timestamp: new Date().toISOString()
+            };
+
+            fetch('/api/tracking/update-location', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).catch((err) => console.error('GPS update failed:', err));
+        }
+
+        function startDutyGpsTracking() {
+            if (trackingDutyState !== 'on_duty' || !trackingBusId || !navigator.geolocation) {
+                return;
+            }
+
+            gpsWatchId = navigator.geolocation.watchPosition(
+                sendLocationUpdate,
+                (err) => console.error('GPS tracking error:', err),
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 15000
+                }
+            );
+        }
+
+        function stopDutyGpsTracking() {
+            if (gpsWatchId !== null) {
+                navigator.geolocation.clearWatch(gpsWatchId);
+                gpsWatchId = null;
+            }
+        }
+
+        // Live clock
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            const el = document.getElementById('liveClock');
+            if (el) el.textContent = '⏰ ' + timeStr;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // Auto-dismiss flash messages after 5 seconds
+        setTimeout(() => {
+            document.querySelectorAll('.flash-msg').forEach(el => {
+                el.style.transition = 'opacity 0.3s ease';
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 300);
+            });
+        }, 5000);
+
+        startDutyGpsTracking();
+        window.addEventListener('beforeunload', stopDutyGpsTracking);
+    </script>
+</body>
+
+</html>

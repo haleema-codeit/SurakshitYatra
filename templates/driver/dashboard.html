@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surakshit Yatra Monitoring</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Outfit', sans-serif; background: #f5f7fa; color: #333; overflow-x: hidden; }
+        
+        .driver_wrapper { display: flex; min-height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .sidebar-header { padding: 0 1.5rem; margin-bottom: 3rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .sidebar .logo img { height: 40px; width: auto; }
+        .user-badge { background: rgba(255, 255, 255, 0.2); padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; backdrop-filter: blur(10px); }
+        
+        .sidebar-nav { margin-bottom: auto; }
+        .nav-item { display: flex; align-items: center; padding: 1rem 1.5rem; color: rgba(255, 255, 255, 0.7); text-decoration: none; transition: all 0.3s ease; gap: 1rem; border-left: 4px solid transparent; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.1); color: white; }
+        .nav-item.active { background: rgba(255, 255, 255, 0.15); color: white; border-left-color: #10b981; }
+        .logout-btn-nav { display: flex; align-items: center; gap: 0.8rem; color: rgba(255, 255, 255, 0.7); text-decoration: none; padding: 1rem 1.5rem; transition: all 0.3s ease; margin-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .logout-btn-nav:hover { background: rgba(255, 255, 255, 0.1); color: white; }
+
+        /* Main Content */
+        .main-content { margin-left: 280px; flex: 1; display: flex; flex-direction: column; }
+        .top-bar { background: white; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+        .top-bar h1 { font-size: 1.8rem; color: #1e3c72; font-weight: 700; }
+        
+        .content-area { flex: 1; padding: 2rem; overflow-y: auto; }
+        
+        .monitor-grid { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; margin-top: 1rem; }
+        .video-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; }
+        .video-header { background: #1e3c72; padding: 1rem 1.5rem; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .video-container { background: #000; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; position: relative; }
+        #video_feed { width: 100%; height: 100%; object-fit: cover; }
+        
+        .controls-card { display: flex; flex-direction: column; gap: 1.5rem; }
+        .status-panel { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-left: 6px solid #10b981; transition: all 0.3s; }
+        .gps-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; margin-top: 0.5rem; padding: 0.5rem 0.8rem; border-radius: 8px; background: rgba(0,0,0,0.05); }
+        .gps-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
+        .gps-dot.active { background: #10b981; animation: gps-pulse 2s infinite; }
+        .gps-dot.error { background: #ef4444; }
+        @keyframes gps-pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        .status-panel.warning { border-left-color: #f59e0b; background: #fffbeb; }
+        .status-panel.danger { border-left-color: #ef4444; background: #fef2f2; }
+        
+        .status-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; font-weight: 700; font-size: 1.1rem; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; background: #10b981; }
+        .status-dot.pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+
+        .btn-test { width: 100%; padding: 1rem; background: #f59e0b; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .btn-test:hover { background: #d97706; }
+
+        /* FULL-SCREEN OVERLAYS */
+        .alert-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000;
+            display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px);
+        }
+        .alert-overlay.active { display: flex; }
+        .alert-overlay.warning { background: rgba(245, 158, 11, 0.9); }
+        .alert-overlay.danger { background: rgba(239, 68, 68, 0.9); }
+        
+        .alert-card {
+            background: white; padding: 3rem; border-radius: 24px; text-align: center; max-width: 500px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: slideUp 0.4s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .alert-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .alert-title { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; color: #1e3c72; }
+        .alert-desc { font-size: 1.2rem; color: #666; font-weight: 500; }
+
+        @media (max-width: 1024px) {
+            .sidebar { width: 80px; }
+            .sidebar .logo, .sidebar span { display: none; }
+            .main-content { margin-left: 80px; }
+            .monitor-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Permission Request Overlay */
+        .permission-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .permission-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .permission-card {
+            background: white;
+            border-radius: 24px;
+            padding: 3rem;
+            max-width: 480px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .permission-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+
+        .permission-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 0.5rem;
+        }
+
+        .permission-subtitle {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .permission-features {
+            text-align: left;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .permission-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+            font-size: 0.95rem;
+            color: #444;
+        }
+
+        .permission-feature:last-child {
+            margin-bottom: 0;
+        }
+
+        .permission-feature .check-icon {
+            color: #10b981;
+            font-size: 1.2rem;
+        }
+
+        .btn-allow {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .btn-allow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-later {
+            width: 100%;
+            padding: 0.8rem 2rem;
+            background: transparent;
+            color: #666;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-later:hover {
+            border-color: #1e3c72;
+            color: #1e3c72;
+        }
+
+        .permission-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: #856404;
+            display: none;
+        }
+
+        .permission-warning.show {
+            display: block;
+        }
+
+        /* GPS Status Enhancement */
+        .gps-permission-banner {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            animation: slideDown 0.3s ease;
+        }
+
+        .gps-permission-banner.show {
+            display: flex;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .gps-permission-banner .banner-icon {
+            font-size: 1.5rem;
+        }
+
+        .gps-permission-banner .banner-text {
+            flex: 1;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .gps-permission-banner .btn-small {
+            padding: 0.5rem 1.2rem;
+            background: white;
+            color: #d97706;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .gps-permission-banner .btn-small:hover {
+            transform: scale(1.05);
+        }
+
+        /* Mini Map for Location Preview */
+        .location-preview {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .location-preview.show {
+            display: block;
+        }
+
+        .location-preview-header {
+            background: #1e3c72;
+            color: white;
+            padding: 0.8rem 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .location-preview-map {
+            height: 200px;
+            background: #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #ccc;
+        }
+
+        .location-preview-coords {
+            padding: 0.8rem 1.2rem;
+            background: #f8fafc;
+            font-size: 0.85rem;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified-theme.css') }}">
+</head>
+<body>
+    <div class="driver-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo"><img src="{{ url_for('static', filename='logo.png') }}" alt="Logo"></div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active">📹 <span data-i18n="MONITORING">Monitoring</span></a>
+                <a href="{{ url_for('driver_logout') }}" class="logout-btn-nav">🚪 <span data-i18n="LOGOUT">Logout</span></a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <h1 data-i18n="DASHBOARD_TITLE">Safe Journey Dashboard</h1>
+                <div class="user-info"><span data-i18n="DRIVER">Driver</span>: <strong>{{ driver.name }}</strong></div>
+                <div class="driver-photo-container">
+                    <img src="{{ url_for('static', filename='uploads/' + driver.photo_filename) if driver and driver.photo_filename else '' }}" class="header-driver-photo" alt="Driver">
+                </div>
+                <div class="driver-info">
+                    <div class="driver-name" id="driver-name-display">{{ driver.name if driver else 'Driver Name' }}</div>
+                    <div class="driver-id" id="driver-id-display">ID: {{ "DRV-%05d"|format(driver.id) if driver else 'N/A' }}</div>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- GPS Permission Banner -->
+                <div id="gps-permission-banner" class="gps-permission-banner">
+                    <span class="banner-icon">📍</span>
+                    <span class="banner-text">Location access is required for live tracking to the depot</span>
+                    <button class="btn-small" onclick="requestLocationPermission()">Allow Access</button>
+                </div>
+
+                <div class="monitor-grid">
+                    <div class="video-card">
+                        <div class="video-header">
+                            <span>📹 <span data-i18n="REALTIME_MONITOR">Real-time Monitoring</span></span>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div class="status-dot pulse"></div> <span data-i18n="LIVE_FEED">LIVE FEED</span>
+                            </div>
+                        </div>
+                        <div class="video-container">
+                            <img id="video_feed" src="{{ url_for('video_feed') }}" alt="Feed">
+                        </div>
+                    </div>
+
+                        <div class="controls-card">
+                            <div id="status-panel" class="status-panel">
+                                <div class="status-header">
+                                    <div id="status-dot-inner" class="status-dot"></div>
+                                    <span id="status-label" data-i18n="SYSTEM_ACTIVE">SYSTEM ACTIVE</span>
+                                </div>
+                                <div id="gps-status-bar" class="gps-status" style="cursor: pointer; margin-top: 10px;" onclick="manualGPSRequest()">
+                                    <div id="gps-dot" class="gps-dot"></div>
+                                    <span id="gps-text">GPS: Initializing... (Click to Retry)</span>
+                                </div>
+                                <div id="status-details" style="color: #666; font-size: 0.95rem; margin-top: 8px;" data-i18n="MONITORING_DESC">
+                                    Monitoring alertness, attention, and safety...
+                                </div>
+                            </div>
+
+                            <!-- Location Preview Card -->
+                            <div id="location-preview" class="location-preview">
+                                <div class="location-preview-header">
+                                    <span>🗺️</span>
+                                    <span>Live Location Preview</span>
+                                </div>
+                                <div class="location-preview-map" id="location-preview-map">
+                                    📍
+                                </div>
+                                <div class="location-preview-coords" id="location-preview-coords">
+                                    Waiting for location data...
+                                </div>
+                            </div>
+
+                        <div class="status-panel" style="border-left-color: #3b82f6;">
+                            <div class="status-header">ℹ️ <span data-i18n="VEHICLE_INFO">Vehicle Info</span></div>
+                            <div style="font-size: 0.9rem; line-height: 1.6;">
+                                <strong data-i18n="BUS">Bus:</strong> {{ vehicle.vehicle_number if vehicle else 'N/A' }}<br>
+                                <strong data-i18n="ROUTE">Route:</strong> {{ vehicle.route_name or 'Main Route' }}<br>
+                                <strong data-i18n="STATUS">Status:</strong> <span data-i18n="MONITORING_STATUS">Assigned & Monitoring</span>
+                            </div>
+                        </div>
+
+                        <button class="btn-test" onclick="testAlarm()" data-i18n="TEST_AUDIO">🔊 TEST AUDIO SYSTEM</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Permission Request Overlay -->
+    <div id="permissionOverlay" class="permission-overlay">
+        <div class="permission-card">
+            <div class="permission-icon">📍</div>
+            <h2 class="permission-title">Location Access Required</h2>
+            <p class="permission-subtitle">To enable live tracking and share your location with the depot control center, please allow location access.</p>
+            
+            <div class="permission-features">
+                <div class="permission-feature">
+                    <span class="check-icon">✓</span>
+                    <span>Real-time GPS tracking for safety monitoring</span>
+                </div>
+                <div class="permission-feature">
+                    <span class="check-icon">✓</span>
+                    <span>Live location shared with depot control center</span>
+                </div>
+                <div class="permission-feature">
+                    <span class="check-icon">✓</span>
+                    <span>Emergency location sharing if alerts are triggered</span>
+                </div>
+                <div class="permission-feature">
+                    <span class="check-icon">✓</span>
+                    <span>Route tracking and journey logging</span>
+                </div>
+            </div>
+
+            <button class="btn-allow" onclick="requestLocationPermission()">
+                🔓 Allow Location Access
+            </button>
+            <button class="btn-later" onclick="dismissPermissionRequest()">
+                Maybe Later
+            </button>
+
+            <div id="permission-warning" class="permission-warning">
+                ⚠️ Without location access, the depot cannot track your vehicle's location for safety monitoring.
+            </div>
+        </div>
+    </div>
+
+    <!-- ALERT OVERLAYS -->
+    <div id="warningOverlay" class="alert-overlay warning">
+        <div class="alert-card">
+            <div class="alert-icon">⚠️</div>
+            <div id="warningTitle" class="alert-title">WARNING</div>
+            <div id="warningDesc" class="alert-desc">Please focus on the road</div>
+        </div>
+    </div>
+
+    <div id="dangerOverlay" class="alert-overlay danger">
+        <div class="alert-card">
+            <div class="alert-icon">🚨</div>
+            <div id="dangerTitle" class="alert-title">DANGER</div>
+            <div id="dangerDesc" class="alert-desc">PULL OVER IMMEDIATELY!</div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/bus-tracker.js') }}"></script>
+    <script>
+        const preferredLang = "{{ session.get('preferred_language', 'English') }}";
+        const busId = {{ vehicle.id if vehicle and vehicle.id else 'null' }};
+        const vehicleNum = "{{ (vehicle.bus_number if vehicle and vehicle.bus_number else 'None')|e }}";
+        
+        // Permission state
+        let permissionRequested = false;
+        let permissionGranted = false;
+        let locationPermissionBannerShown = false;
+
+        // Check if we need to show permission request
+        function checkLocationPermission() {
+            if (!navigator.geolocation) {
+                console.warn('❌ Geolocation is not supported by this browser');
+                showGPSError('Geolocation not supported by your browser');
+                return false;
+            }
+
+            // Check permission status using Permissions API if available
+            if (navigator.permissions) {
+                navigator.permissions.query({ name: 'geolocation' }).then(result => {
+                    console.log('📍 Location permission status:', result.state);
+                    
+                    if (result.state === 'granted') {
+                        permissionGranted = true;
+                        startTracking();
+                    } else if (result.state === 'denied') {
+                        showPermissionDenied();
+                    } else {
+                        // 'prompt' - show our custom permission overlay
+                        showPermissionOverlay();
+                    }
+                }).catch(err => {
+                    console.warn('Could not check permission status:', err);
+                    // Fallback: show overlay anyway
+                    showPermissionOverlay();
+                });
+            } else {
+                // Permissions API not available, show overlay
+                showPermissionOverlay();
+            }
+        }
+
+        function showPermissionOverlay() {
+            const overlay = document.getElementById('permissionOverlay');
+            overlay.classList.add('active');
+            permissionRequested = true;
+        }
+
+        function dismissPermissionRequest() {
+            const overlay = document.getElementById('permissionOverlay');
+            overlay.classList.remove('active');
+            
+            // Show the banner instead
+            showLocationPermissionBanner();
+            
+            // Try to start tracking anyway (might work if user previously allowed)
+            attemptTrackingWithoutPrompt();
+        }
+
+        function showLocationPermissionBanner() {
+            const banner = document.getElementById('gps-permission-banner');
+            banner.classList.add('show');
+            locationPermissionBannerShown = true;
+        }
+
+        function hideLocationPermissionBanner() {
+            const banner = document.getElementById('gps-permission-banner');
+            banner.classList.remove('show');
+        }
+
+        function showPermissionDenied() {
+            const overlay = document.getElementById('permissionOverlay');
+            overlay.classList.add('active');
+            
+            // Update the card to show denial message
+            const title = overlay.querySelector('.permission-title');
+            const subtitle = overlay.querySelector('.permission-subtitle');
+            const features = overlay.querySelector('.permission-features');
+            const allowBtn = overlay.querySelector('.btn-allow');
+            const warning = document.getElementById('permission-warning');
+            
+            title.textContent = 'Location Access Denied';
+            title.style.color = '#ef4444';
+            subtitle.textContent = 'Location access was denied. To enable live tracking, please allow location access in your browser settings.';
+            features.style.display = 'none';
+            allowBtn.textContent = '🔓 Open Browser Settings';
+            allowBtn.onclick = () => {
+                window.open('about:preferences#privacy', '_blank');
+            };
+            warning.classList.add('show');
+        }
+
+        function requestLocationPermission() {
+            const overlay = document.getElementById('permissionOverlay');
+            overlay.classList.remove('active');
+            hideLocationPermissionBanner();
+            
+            updateGPSUI('warning', 'GPS: Requesting permission...');
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    permissionGranted = true;
+                    console.log('✅ Location permission granted');
+                    startTracking();
+                    updateGPSUI('active', 'GPS: Tracking Active');
+                },
+                (error) => {
+                    console.error('❌ Location permission denied:', error);
+                    handlePermissionError(error);
+                },
+                { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+            );
+        }
+
+        function handlePermissionError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    showPermissionDenied();
+                    updateGPSUI('error', 'GPS: Permission Denied');
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    showGPSError('Location information is unavailable');
+                    updateGPSUI('error', 'GPS: Position Unavailable');
+                    break;
+                case error.TIMEOUT:
+                    showGPSError('Location request timed out');
+                    updateGPSUI('error', 'GPS: Request Timeout');
+                    break;
+                default:
+                    showGPSError('An unknown error occurred');
+                    updateGPSUI('error', 'GPS: Unknown Error');
+                    break;
+            }
+        }
+
+        function showGPSError(message) {
+            console.error('GPS Error:', message);
+            updateGPSUI('error', `GPS: ${message}`);
+        }
+
+        function attemptTrackingWithoutPrompt() {
+            // Try to get position without prompting (might work if previously allowed)
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    permissionGranted = true;
+                    startTracking();
+                    updateGPSUI('active', 'GPS: Tracking Active');
+                },
+                (error) => {
+                    updateGPSUI('error', 'GPS: Permission Required');
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        }
+
+        function startTracking() {
+            if (!busId) {
+                console.warn('⚠️ No bus ID available for tracking');
+                updateGPSUI('warning', 'GPS: No Bus Assigned');
+                return;
+            }
+
+            console.log('🚍 Starting GPS tracking for bus:', busId);
+            
+            // Initialize BusTracker
+            const initSuccess = BusTracker.init(busId, { updateInterval: 5000 });
+            if (!initSuccess) {
+                console.error('❌ BusTracker initialization failed');
+                updateGPSUI('error', 'GPS: Tracker Init Failed');
+                return;
+            }
+
+            // Set up location update callback
+            BusTracker.onUpdate((data) => {
+                const time = new Date().toLocaleTimeString();
+                updateGPSUI('active', `GPS: Live (Last Sync: ${time})`);
+                updateLocationPreview(data);
+            });
+
+            // Start tracking
+            BusTracker.startTracking();
+            console.log('✅ GPS tracking started successfully');
+        }
+
+        function updateLocationPreview(data) {
+            const preview = document.getElementById('location-preview');
+            const coords = document.getElementById('location-preview-coords');
+            
+            if (preview && coords) {
+                preview.classList.add('show');
+                coords.innerHTML = `
+                    <strong>Latitude:</strong> ${data.latitude.toFixed(6)}<br>
+                    <strong>Longitude:</strong> ${data.longitude.toFixed(6)}<br>
+                    <strong>Speed:</strong> ${data.speed ? (data.speed * 3.6).toFixed(1) : 0} km/h<br>
+                    <strong>Accuracy:</strong> ±${data.accuracy ? data.accuracy.toFixed(0) : '?'}m<br>
+                    <strong>Status:</strong> ${data.status || 'Tracking'}
+                `;
+            }
+        }
+
+        function manualGPSRequest() {
+            if (!navigator.geolocation) {
+                alert("Your browser does not support GPS or it is being blocked because this is not a secure connection. Please use 'http://localhost:5001' instead of an IP address.");
+                return;
+            }
+            if (!busId) {
+                alert("GPS cannot start because there is no bus assigned to you for today's date.");
+                return;
+            }
+            requestLocationPermission();
+        }
+
+        console.log('Driver dashboard - preferredLang:', preferredLang);
+        let audioContext = null;
+        let lastVoiceAlertTime = 0;
+        let lastVoiceAlertMessage = '';
+        let lastAlarmTime = 0;
+        let lastWarningAlarmTime = 0;
+
+        const langMap = {
+            'English': 'en-IN', 'Hindi': 'hi-IN', 'Tamil': 'ta-IN', 'Telugu': 'te-IN', 
+            'Kannada': 'kn-IN', 'Bengali': 'bn-IN'
+        };
+
+        const alertTranslations = {
+            'English': {
+                'SAFE': 'All systems normal. Safe driving. Keep it up!',
+                'START': 'Surakshit Yatra monitoring active. Have a safe journey.',
+                'DANGER: DROWSY': 'Alert! Drowsiness detected! Your eyes are closing! Pull over immediately!',
+                'WARNING: SLEEPY': 'Warning! You are showing signs of sleepiness. Please stay alert or take a break.',
+                'DANGER: PHONE': 'Danger! Phone usage detected! Put the phone away immediately and focus on the road!',
+                'PHONE USAGE (WARNING)': 'Warning! Using a phone while driving is dangerous. Please put it away.',
+                'DANGER: HEAD DOWN': 'Critical Alert! Your head is down! Look at the road immediately!',
+                'HEAD DISTRACTION (DOWN)': 'Warning! Keep your head up and maintain eye contact with the road.',
+                'DANGER: ROAD ATTENTION LOST': 'Danger! You are not watching the road! Look ahead immediately!',
+                'ROAD ATTENTION WARNING': 'Warning! Your attention is drifting from the road. Please focus.',
+                'YAWNING': 'You are yawning. Fatigue detected. Consider stopping for a rest.',
+                'UI': {
+                    'MONITORING': 'Monitoring', 'LOGOUT': 'Logout', 'DASHBOARD_TITLE': 'Surakshit Yatra Dashboard',
+                    'DRIVER': 'Driver', 'REALTIME_MONITOR': 'Real-time Monitoring', 'LIVE_FEED': 'LIVE FEED',
+                    'SYSTEM_ACTIVE': 'SYSTEM ACTIVE', 'MONITORING_DESC': 'All systems normal. Monitoring...',
+                    'VEHICLE_INFO': 'Vehicle Info', 'BUS': 'Bus:', 'ROUTE': 'Route:', 'STATUS': 'Status:',
+                    'MONITORING_STATUS': 'Assigned & Monitoring', 'TEST_AUDIO': '🔊 TEST AUDIO SYSTEM'
+                }
+            },
+            'Hindi': {
+                'SAFE': 'सभी सिस्टम सामान्य हैं। सुरक्षित ड्राइविंग। इसे जारी रखें!',
+                'START': 'सुरक्षित यात्रा निगरानी सक्रिय। आपकी यात्रा मंगलमय हो।',
+                'DANGER: DROWSY': 'खतरा! आपकी आंखें बंद हो रही हैं! तुरंत रुकें!',
+                'WARNING: SLEEPY': 'चेतावनी! आपको नींद आ रही है। कृपया सतर्क रहें या ब्रेक लें।',
+                'DANGER: PHONE': 'खतरा! फोन का उपयोग! इसे अभी रख दें और सड़क पर ध्यान दें!',
+                'PHONE USAGE (WARNING)': 'चेतावनी! वाहन चलाते समय फोन का उपयोग खतरनाक है। इसे दूर रखें।',
+                'DANGER: HEAD DOWN': 'गंभीर खतरा! आपका सिर नीचे है! सड़क पर तुरंत देखें!',
+                'HEAD DISTRACTION (DOWN)': 'चेतावनी! अपना सिर ऊपर रखें और सड़क पर ध्यान दें।',
+                'DANGER: ROAD ATTENTION LOST': 'खतरा! आपका ध्यान सड़क पर नहीं है! तुरंत सामने देखें!',
+                'ROAD ATTENTION WARNING': 'चेतावनी! आपका ध्यान सड़क से हट रहा है। कृपया ध्यान दें।',
+                'YAWNING': 'आप जम्हाई ले रहे हैं। थकान महसूस हो रही है। आराम करने पर विचार करें।',
+                'UI': {
+                    'MONITORING': 'निगरानी', 'LOGOUT': 'लॉगआउट', 'DASHBOARD_TITLE': 'सुरक्षित यात्रा डैशबोर्ड',
+                    'DRIVER': 'ड्राइवर', 'REALTIME_MONITOR': 'वास्तविक समय निगरानी', 'LIVE_FEED': 'लाइव फीड',
+                    'SYSTEM_ACTIVE': 'सिस्टम सक्रिय', 'MONITORING_DESC': 'सभी सिस्टम सामान्य। निगरानी जारी...',
+                    'VEHICLE_INFO': 'वाहन की जानकारी', 'BUS': 'बस:', 'ROUTE': 'मार्ग:', 'STATUS': 'स्थिति:',
+                    'MONITORING_STATUS': 'असाइन किया गया और निगरानी', 'TEST_AUDIO': '🔊 ऑडियो सिस्टम का परीक्षण'
+                }
+            },
+            'Tamil': {
+                'SAFE': 'அனைத்து அமைப்புகளும் சீராக உள்ளன. பாதுகாப்பான பயணம். தொடரட்டும்!',
+                'START': 'பாதுகாப்பான பயண கண்காணிப்பு செயல்பாட்டில் உள்ளது. நற்பயணம் அமையட்டும்.',
+                'DANGER: DROWSY': 'ஆபத்து! உங்கள் கண்கள் மூடுகின்றன! உடனே வாகனத்தை நிறுத்துங்கள்!',
+                'WARNING: SLEEPY': 'எச்சரிக்கை! உங்களுக்கு தூக்கம் வருகிறது. விழிப்புடன் இருக்கவும்.',
+                'DANGER: PHONE': 'ஆபத்து! போனை பயன்படுத்தாதீர்கள்! சாலையில் கவனம் செலுத்துங்கள்!',
+                'PHONE USAGE (WARNING)': 'எச்சரிக்கை! போனை பயன்படுத்துவது ஆபத்தானது. அதைத் தவிர்க்கவும்.',
+                'DANGER: HEAD DOWN': 'ஆபத்து! உங்கள் தலை கீழே உள்ளது! சாலையை உடனடியாகப் பாருங்கள்!',
+                'HEAD DISTRACTION (DOWN)': 'எச்சரிக்கை! உங்கள் தலையை உயர்த்திச் சாலையைப் பாருங்கள்.',
+                'DANGER: ROAD ATTENTION LOST': 'ஆபத்து! உங்கள் கவனம் சாலையில் இல்லை! முன்னால் பாருங்கள்!',
+                'ROAD ATTENTION WARNING': 'எச்சரிக்கை! உங்கள் கவனம் சிதறுகிறது. கவனித்து ஓட்டவும்.',
+                'YAWNING': 'நீங்கள் கொட்டாవి விடுகிறீர்கள். ஓய்வு எடுக்கவும்.',
+                'UI': {
+                    'MONITORING': 'கண்காணிப்பு', 'LOGOUT': 'வெளியேறு', 'DASHBOARD_TITLE': 'பாதுகாப்பான பயண டேஷ்போர்டு',
+                    'DRIVER': 'ஓட்டுநர்', 'REALTIME_MONITOR': 'உண்நேர கண்காணிப்பு', 'LIVE_FEED': 'நேரடி ஒளிபரப்பு',
+                    'SYSTEM_ACTIVE': 'சிஸ்டம் செயலில் உள்ளது', 'MONITORING_DESC': 'அனைத்து அமைப்புகளும் சீராக உள்ளன...',
+                    'VEHICLE_INFO': 'வாகன விவரங்கள்', 'BUS': 'பேருந்து:', 'ROUTE': 'பாதை:', 'STATUS': 'நிலை:',
+                    'MONITORING_STATUS': 'ஒதுக்கப்பட்டு கண்காணிக்கப்படுகிறது', 'TEST_AUDIO': '🔊 ஆடியோவை சோதிக்கவும்'
+                }
+            },
+            'Telugu': {
+                'SAFE': 'అన్నీ సాధారణంగా ఉన్నాయి. సురక్షిత డ్రైవింగ్. ఇలాగే కొనసాగించండి!',
+                'START': 'సురక్షిత ప్రయాణ పర్యవేక్షణ ప్రారంభమైంది. శుభప్రయాణం.',
+                'DANGER: DROWSY': 'ప్రమాదం! మీ కళ్ళు మూతపడుతున్నాయి! వెంటనే వాహనాన్ని ఆపండి!',
+                'WARNING: SLEEPY': 'హెచ్చరిక! మీకు నిద్ర వస్తోంది. అప్రమత్తంగా ఉండండి లేదా విశ్రాంతి తీసుకోండి.',
+                'DANGER: PHONE': 'ప్రమాదం! ఫోన్ వాడుతున్నారు! వెంటనే పక్కన పెట్టి రోడ్డుపై దృష్టి పెట్టండి!',
+                'PHONE USAGE (WARNING)': 'హెచ్చరిక! డ్రైవింగ్ సమయంలో ఫోన్ వాడటం ప్రమాదకరం. పక్కన పెట్టండి.',
+                'DANGER: HEAD DOWN': 'తీవ్ర ప్రమాదం! మీ తల కిందకు ఉంది! వెంటనే రోడ్డుపై దృష్టి సారించండి!',
+                'HEAD DISTRACTION (DOWN)': 'హెచ్చరిక! మీ తలను పైకి ఉంచి రోడ్డుపైనే చూడండి.',
+                'DANGER: ROAD ATTENTION LOST': 'ప్రమాదం! మీరు రోడ్డును చూడటం లేదు! వెంటనే ముందు చూడండి!',
+                'ROAD ATTENTION WARNING': 'హెచ్చరిక! మీ దృష్టి రోడ్డు నుండి మళ్ళుతోంది. దయచేసి శ్రద్ధ వహించండి.',
+                'YAWNING': 'మీరు ఆవలిస్తున్నారు. అలసటగా ఉన్నట్లుంది. విశ్రాంతి తీసుకోండి.',
+                'UI': {
+                    'MONITORING': 'పర్యవేక్షణ', 'LOGOUT': 'నిష్క్రమణ', 'DASHBOARD_TITLE': 'సురక్షిత ప్రయాణ డాష్‌బోర్డ్',
+                    'DRIVER': 'డ్రైవర్', 'REALTIME_MONITOR': 'నిజ సమయ పర్యవేక్షణ', 'LIVE_FEED': 'లైవ్ ఫీడ్',
+                    'SYSTEM_ACTIVE': 'సిస్టమ్ యాక్టివ్', 'MONITORING_DESC': 'అన్నీ సాధారణంగా ఉన్నాయి. పర్యవేక్షణ...',
+                    'VEHICLE_INFO': 'వాహన సమాచారం', 'BUS': 'బస్సు:', 'ROUTE': 'మార్గం:', 'STATUS': 'స్థితి:',
+                    'MONITORING_STATUS': 'కేటాయించబడింది', 'TEST_AUDIO': '🔊 ఆడియోను పరీక్షించండి'
+                }
+            },
+            'Kannada': {
+                'SAFE': 'ಎಲ್ಲವೂ ಸಾಮಾನ್ಯವಾಗಿದೆ. ಸುರಕ್ಷಿತ ಚಾಲನೆ. ಹೀಗೆಯೇ ಮುಂದುವರಿಸಿ!',
+                'START': 'ಸುರಕ್ಷಿತ ಪ್ರಯಾಣದ ಮೇಲ್ವಿಚಾರಣೆ ಪ್ರಾರಂಭವಾಗಿದೆ. ಶುಭ ಪ್ರಯಾಣ.',
+                'DANGER: DROWSY': 'ಅಪಾಯ! ನಿಮ್ಮ ಕಣ್ಣುಗಳು ಮುಚ್ಚುತ್ತಿವೆ! ತಕ್ಷಣ ವಾಹನ ನಿಲ್ಲಿಸಿ!',
+                'WARNING: SLEEPY': 'ಎಚ್ಚರಿಕೆ! ನಿಮಗೆ ನಿದ್ರೆ ಬರುತ್ತಿದೆ. ಜಾಗರೂಕರಾಗಿರಿ ಅಥವಾ ವಿಶ್ರಾಂತಿ ಪಡೆಯಿರಿ.',
+                'DANGER: PHONE': 'ಅಪಾಯ! ಫೋನ್ ಬಳಸುತ್ತಿದ್ದೀರಿ! ತಕ್ಷಣ ಅದನ್ನು ಪಕ್ಕಕ್ಕೆ ಇಟ್ಟು ರಸ್ತೆಯ ಮೇಲೆ ಗಮನ ಹರಿಸಿ!',
+                'PHONE USAGE (WARNING)': 'ಎಚ್ಚರಿಕೆ! ಚಾಲನೆ ಮಾಡುವಾಗ ಫೋನ್ ಬಳಸುವುದು ಅಪಾಯಕಾರಿ.',
+                'DANGER: HEAD DOWN': 'ತೀವ್ರ ಅಪಾಯ! ನಿಮ್ಮ ತಲೆ ಕೆಳಗೆ ಇದೆ! ತಕ್ಷಣ ರಸ್ತೆಯನ್ನು ನೋಡಿ!',
+                'HEAD DISTRACTION (DOWN)': 'ಎಚ್ಚರಿಕೆ! ನಿಮ್ಮ ತಲೆಯನ್ನು ಮೇಲೆ ಇಟ್ಟು ರಸ್ತೆಯತ್ತ ಗಮನ ಹರಿಸಿ.',
+                'DANGER: ROAD ATTENTION LOST': 'ಅಪಾಯ! ನೀವು ರಸ್ತೆಯನ್ನು ನೋಡುತ್ತಿಲ್ಲ! ತಕ್ಷಣ ಮುಂದೆ ನೋಡಿ!',
+                'ROAD ATTENTION WARNING': 'ಎಚ್ಚರಿಕೆ! ನಿಮ್ಮ ಗಮನ ರಸ್ತೆಯಿಂದ ಬೇರೆಡೆ ಹೋಗುತ್ತಿದೆ. ದಯವಿಟ್ಟು ಗಮನಿಸಿ.',
+                'YAWNING': 'ನೀವು ಆಕಳಿಸುತ್ತಿದ್ದೀರಿ. ಆಯಾಸವಾಗಿದೆ. ವಿಶ್ರಾಂತಿ ತೆಗೆದುಕೊಳ್ಳಿ.',
+                'UI': {
+                    'MONITORING': 'ಮೇಲ್ವಿಚಾರಣೆ', 'LOGOUT': 'ನಿರ್ಗಮಿಸಿ', 'DASHBOARD_TITLE': 'ಸುರಕ್ಷಿತ ಪ್ರಯಾಣದ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್',
+                    'DRIVER': 'ಚಾಲಕ', 'REALTIME_MONITOR': 'ನೈಜ ಸಮಯದ ಮೇಲ್ವಿಚಾರಣೆ', 'LIVE_FEED': 'ಲೈವ್ ಫೀಡ್',
+                    'SYSTEM_ACTIVE': 'ಸಿಸ್ಟಮ್ ಸಕ್ರಿಯವಾಗಿದೆ', 'MONITORING_DESC': 'ಎಲ್ಲವೂ ಸಾಮಾನ್ಯವಾಗಿದೆ. ಮೇಲ್ವಿಚಾರಣೆ...',
+                    'VEHICLE_INFO': 'ವಾಹನದ ಮಾಹಿತಿ', 'BUS': 'ಬಸ್:', 'ROUTE': 'ಮಾರ್ಗ:', 'STATUS': 'ಸ್ಥಿತಿ:',
+                    'MONITORING_STATUS': 'ನಿಯೋಜಿಸಲಾಗಿದೆ', 'TEST_AUDIO': '🔊 ಆಡಿಯೊ ಪರೀಕ್ಷಿಸಿ'
+                }
+            },
+            'Bengali': {
+                'SAFE': 'সুরক্ষিত ড্রাইভিং। চালিয়ে যান!',
+                'START': 'নিরীক্ষণ শুরু হয়েছে। শুভ যাত্রা।',
+                'DANGER: DROWSY': 'বিপদ! আপনার চোখ বন্ধ হয়ে যাচ্ছে! অবিলম্বে গাড়ি থামান!',
+                'WARNING: SLEEPY': 'সতর্কবাণী! আপনার চোখ বন্ধ হয়ে যাচ্ছে। সতর্ক থাকুন!',
+                'DANGER: PHONE': 'বিপদ! ফোন সরিয়ে রাখুন!',
+                'DANGER: HEAD DOWN': 'বিপদ! আপনার মাথা নিছু। রাস্তার দিকে তাকান!',
+                'HEAD DISTRACTION (DOWN)': 'সতর্কবাণী! মাথা তুলুন এবং রাস্তার দিকে তাকান!',
+                'DANGER: ROAD ATTENTION LOST': 'বিপদ! আপনি রাস্তার দিকে তাকাচ্ছেন না। অবিলম্বে সামনে তাকান!',
+                'PHONE USAGE (WARNING)': 'সতর্কবাণী! ফোন পাওয়া গেছে। এটি এখনই সরিয়ে রাখুন!',
+                'ROAD ATTENTION WARNING': 'সতর্কবাণী! আপনার মনোযোগ রাস্তা থেকে সরে গেছে। সামনে তাকান।',
+                'YAWNING': 'সতর্কবাণী! আপনি হাই তুলছেন।',
+                'UI': {
+                    'MONITORING': 'নজরদারি',
+                    'LOGOUT': 'লগআউট',
+                    'DASHBOARD_TITLE': 'সুরক্ষিত যাত্রা ড্যাশবোর্ড',
+                    'DRIVER': 'চালক',
+                    'REALTIME_MONITOR': 'রিয়েল-টাইম নজরদারি',
+                    'LIVE_FEED': 'লাইভ ফিড',
+                    'SYSTEM_ACTIVE': 'সিস্টেম সক্রিয়',
+                    'MONITORING_DESC': 'সুরক্ষা নজরদারি চলছে...',
+                    'VEHICLE_INFO': 'গাড়ির তথ্য',
+                    'BUS': 'বাস:',
+                    'ROUTE': 'রুট:',
+                    'STATUS': 'স্থিতি:',
+                    'MONITORING_STATUS': 'নিযুক্ত ও নজরদারি',
+                    'TEST_AUDIO': 'অডিও সিস্টেম পরীক্ষা করুন'
+                }
+            }
+        };
+
+        const overlayTranslations = {
+            'English': { 'DANGER': 'DANGER!', 'WARNING': 'WARNING', 'PULL_OVER': 'PULL OVER IMMEDIATELY!', 'FOCUS': 'Please focus on the road' },
+            'Hindi': { 'DANGER': 'खतरा!', 'WARNING': 'चेतावनी', 'PULL_OVER': 'तुरंत रुकें!', 'FOCUS': 'सड़क पर ध्यान दें' },
+            'Tamil': { 'DANGER': 'ஆபத்து!', 'WARNING': 'எச்சரிக்கை', 'PULL_OVER': 'உடனே நிறுத்துங்கள்!', 'FOCUS': 'சாலையில் கவனம் செலுத்துங்கள்' },
+            'Telugu': { 'DANGER': 'ప్రమాదం!', 'WARNING': 'హెచ్చరిక', 'PULL_OVER': 'వెంటనే ఆపండి!', 'FOCUS': 'రోడ్డుపై దృష్టి పెట్టండి' },
+            'Kannada': { 'DANGER': 'ಅಪಾಯ!', 'WARNING': 'ಎಚ್ಚರಿಕೆ', 'PULL_OVER': 'ತಕ್ಷಣ ನಿಲ್ಲಿಸಿ!', 'FOCUS': 'ರಸ್ತೆಯತ್ತ ಗಮನ ಹರಿಸಿ' },
+            'Bengali': { 'DANGER': 'বিপদ!', 'WARNING': 'সতর্কবাণী', 'PULL_OVER': 'অবিলম্বে থামুন!', 'FOCUS': 'রাস্তায় মনোযোগ দিন' }
+        };
+
+        function initAudio() {
+            if (audioContext) return;
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            audioContext = new AudioCtx();
+        }
+
+        let lastSpokenMessage = '';
+        let lastSpokenTime = 0;
+        let isSpeaking = false;
+        let speechTimeout = null;
+        let lastAlertKey = '';
+        let speechQueue = [];
+        let isSpeechLocked = false;
+        let speechStartTime = 0;
+        let speechTimeoutTimer = null;
+
+        function speak(msgKey) {
+            if (!('speechSynthesis' in window)) return;
+
+            const text = alertTranslations[preferredLang]?.[msgKey] || alertTranslations['English'][msgKey] || msgKey;
+            
+            // Critical alerts have shorter throttle (e.g. DANGER)
+            const isCritical = msgKey.includes('DANGER');
+            
+            // Throttle duplicate alerts (15 seconds for non-critical, 8 seconds for critical)
+            const throttleTime = isCritical ? 8000 : 15000;
+            if (text === lastSpokenMessage && (Date.now() - lastSpokenTime) < throttleTime) {
+                console.log('Throttled (too soon):', msgKey);
+                return;
+            }
+            
+            // If already speaking or locked, skip - don't queue multiple
+            if (isSpeaking || isSpeechLocked) {
+                console.log('Speech locked, skipping:', msgKey);
+                return;
+            }
+
+            // Cancel any pending speeches first
+            window.speechSynthesis.cancel();
+            
+            // Lock speech to prevent overlapping calls
+            isSpeechLocked = true;
+            isSpeaking = true; // Set immediately to prevent race conditions
+            speechStartTime = Date.now();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = langMap[preferredLang] || 'en-IN';
+            utterance.rate = 0.8; // Slower for clarity
+            utterance.volume = 1.0;
+            utterance.pitch = isCritical ? 1.2 : 1.0; // Higher pitch for urgency
+            
+            utterance.onstart = () => {
+                lastSpokenMessage = text;
+                lastSpokenTime = Date.now();
+                lastAlertKey = msgKey;
+                console.log('✅ Speech started:', msgKey, '| Text:', text.substring(0, 50) + '...');
+                
+                // Safety timeout - force unlock after max duration (30 seconds)
+                if (speechTimeoutTimer) clearTimeout(speechTimeoutTimer);
+                speechTimeoutTimer = setTimeout(() => {
+                    if (isSpeaking) {
+                        console.warn('⚠️ Speech timeout, forcing unlock:', msgKey);
+                        isSpeaking = false;
+                        isSpeechLocked = false;
+                    }
+                }, 30000);
+            };
+
+            utterance.onend = () => {
+                const duration = Date.now() - speechStartTime;
+                isSpeaking = false;
+                isSpeechLocked = false;
+                if (speechTimeoutTimer) clearTimeout(speechTimeoutTimer);
+                console.log('✅ Speech completed:', msgKey, '| Duration:', duration + 'ms');
+            };
+
+            utterance.onerror = (event) => {
+                const duration = Date.now() - speechStartTime;
+                isSpeaking = false;
+                isSpeechLocked = false;
+                if (speechTimeoutTimer) clearTimeout(speechTimeoutTimer);
+                console.warn('❌ Speech error:', event.error, msgKey, '| Duration:', duration + 'ms');
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Function to stop any ongoing speech (called when alert clears)
+        function stopSpeech() {
+            window.speechSynthesis.cancel();
+            isSpeaking = false;
+            isSpeechLocked = false;
+            speechQueue = [];
+            console.log('Speech stopped and reset');
+        }
+
+        function playAlarm(type) {
+            initAudio();
+            if (!audioContext) return;
+            if (audioContext.state === 'suspended') audioContext.resume();
+
+            if (type === 'danger') {
+                const now = Date.now();
+                if (now - lastAlarmTime < 1200) return; // Longer cooldown for scarier alarm
+                lastAlarmTime = now;
+
+                const t = audioContext.currentTime;
+                
+                // Master gain with higher volume
+                const master = audioContext.createGain();
+                const compressor = audioContext.createDynamicsCompressor();
+                compressor.threshold.setValueAtTime(-30, t);
+                compressor.knee.setValueAtTime(12, t);
+                compressor.ratio.setValueAtTime(20, t);
+                compressor.attack.setValueAtTime(0.002, t);
+                compressor.release.setValueAtTime(0.2, t);
+                master.connect(compressor);
+                compressor.connect(audioContext.destination);
+
+                // More aggressive volume envelope - sudden attack, longer sustain
+                master.gain.setValueAtTime(0.0001, t);
+                master.gain.exponentialRampToValueAtTime(1.0, t + 0.02); // Faster attack
+                master.gain.setValueAtTime(1.0, t + 1.5); // Longer sustain
+                master.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+
+                // Primary siren - more dissonant and urgent
+                const sirenPrimary = audioContext.createOscillator();
+                sirenPrimary.type = 'sawtooth';
+                // More dramatic frequency sweep
+                sirenPrimary.frequency.setValueAtTime(500, t);
+                sirenPrimary.frequency.exponentialRampToValueAtTime(1600, t + 0.3);
+                sirenPrimary.frequency.exponentialRampToValueAtTime(400, t + 0.6);
+                sirenPrimary.frequency.exponentialRampToValueAtTime(1800, t + 0.9);
+                sirenPrimary.frequency.exponentialRampToValueAtTime(500, t + 1.2);
+                sirenPrimary.frequency.exponentialRampToValueAtTime(1500, t + 1.5);
+
+                // Secondary siren - dissonant harmony
+                const sirenSecondary = audioContext.createOscillator();
+                sirenSecondary.type = 'square';
+                // Tritone interval (most dissonant)
+                sirenSecondary.frequency.setValueAtTime(707, t); // ~500 * sqrt(2)
+                sirenSecondary.frequency.exponentialRampToValueAtTime(2263, t + 0.3); // ~1600 * sqrt(2)
+                sirenSecondary.frequency.exponentialRampToValueAtTime(566, t + 0.6);
+                sirenSecondary.frequency.exponentialRampToValueAtTime(2546, t + 0.9);
+                sirenSecondary.frequency.exponentialRampToValueAtTime(707, t + 1.2);
+                sirenSecondary.frequency.exponentialRampToValueAtTime(2121, t + 1.5);
+
+                // Low frequency pulse - creates urgency
+                const lowPulse = audioContext.createOscillator();
+                lowPulse.type = 'sine';
+                lowPulse.frequency.setValueAtTime(80, t);
+                const pulseGain = audioContext.createGain();
+                pulseGain.gain.setValueAtTime(0, t);
+                pulseGain.gain.linearRampToValueAtTime(0.8, t + 0.1);
+                pulseGain.gain.setValueAtTime(0.8, t + 1.4);
+                pulseGain.gain.linearRampToValueAtTime(0, t + 1.8);
+                lowPulse.connect(pulseGain);
+                pulseGain.connect(master);
+
+                // High-pitched distress signal
+                const distressBeep = audioContext.createOscillator();
+                distressBeep.type = 'square';
+                distressBeep.frequency.setValueAtTime(2800, t);
+                const distressGain = audioContext.createGain();
+                distressGain.gain.setValueAtTime(0, t);
+                // Pulsing pattern
+                for (let i = 0; i < 6; i++) {
+                    const startTime = t + i * 0.3;
+                    distressGain.gain.setValueAtTime(0, startTime);
+                    distressGain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+                    distressGain.gain.setValueAtTime(0.3, startTime + 0.15);
+                    distressGain.gain.linearRampToValueAtTime(0, startTime + 0.25);
+                }
+                distressBeep.connect(distressGain);
+                distressGain.connect(master);
+
+                // Connect all oscillators
+                sirenPrimary.connect(master);
+                sirenSecondary.connect(master);
+
+                // Start all oscillators
+                sirenPrimary.start(t);
+                sirenSecondary.start(t);
+                lowPulse.start(t);
+                distressBeep.start(t);
+
+                // Stop all oscillators
+                sirenPrimary.stop(t + 1.8);
+                sirenSecondary.stop(t + 1.8);
+                lowPulse.stop(t + 1.8);
+                distressBeep.stop(t + 1.8);
+                return;
+            }
+
+            const now = Date.now();
+            if (now - lastWarningAlarmTime < 450) return;
+            lastWarningAlarmTime = now;
+
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(520, audioContext.currentTime);
+            osc.frequency.linearRampToValueAtTime(740, audioContext.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.38, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.24);
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.24);
+        }
+
+        function updateGPSUI(status, text) {
+            const dot = document.getElementById('gps-dot');
+            const label = document.getElementById('gps-text');
+            if (!dot || !label) return;
+            dot.className = 'gps-dot ' + status;
+            label.innerText = text;
+        }
+
+        function updateUI() {
+            fetch('/status')
+                .then(r => r.json())
+                .then(data => {
+                    const statusPanel = document.getElementById('status-panel');
+                    const statusLabel = document.getElementById('status-label');
+                    const statusDot = document.getElementById('status-dot-inner');
+                    const statusDetails = document.getElementById('status-details');
+                    
+                    const warningOverlay = document.getElementById('warningOverlay');
+                    const dangerOverlay = document.getElementById('dangerOverlay');
+                    const t = overlayTranslations[preferredLang] || overlayTranslations['English'];
+                    const langDict = alertTranslations[preferredLang] || alertTranslations['English'];
+
+                    if (data.alert) {
+                        // DANGER STATE
+                        let alertKey = 'DANGER: DROWSY';
+                        if (data.status.includes('PHONE')) alertKey = 'DANGER: PHONE';
+                        else if (data.status.includes('ROAD')) alertKey = 'DANGER: ROAD ATTENTION LOST';
+                        else if (data.status.includes('HEAD')) alertKey = 'DANGER: HEAD DOWN';
+
+                        statusPanel.className = 'status-panel danger';
+                        statusLabel.innerText = t.DANGER;
+                        statusDot.style.background = '#ef4444';
+                        statusDetails.innerText = langDict[alertKey] || data.status;
+                        
+                        dangerOverlay.classList.add('active');
+                        warningOverlay.classList.remove('active');
+                        document.getElementById('dangerTitle').innerText = t.DANGER;
+                        document.getElementById('dangerDesc').innerText = t.PULL_OVER;
+                        
+                        playAlarm('danger');
+                        speak(alertKey);
+                        
+                        // Update Bus Status to DANGER
+                        if (busId) BusTracker.setStatus('DANGER');
+
+                    } else if (data.status && data.status !== 'SAFE') {
+                        // WARNING STATE
+                        let alertKey = 'YAWNING';
+                        if (data.status.includes('SLEEPY')) alertKey = 'WARNING: SLEEPY';
+                        else if (data.status.includes('PHONE')) alertKey = 'PHONE USAGE (WARNING)';
+                        else if (data.status.includes('HEAD')) alertKey = 'HEAD DISTRACTION (DOWN)';
+                        else if (data.status.includes('ROAD')) alertKey = 'ROAD ATTENTION WARNING';
+                        else if (data.status.includes('YAWNING')) alertKey = 'YAWNING';
+
+                        statusPanel.className = 'status-panel warning';
+                        statusLabel.innerText = t.WARNING;
+                        statusDot.style.background = '#f59e0b';
+                        statusDetails.innerText = langDict[alertKey] || data.status;
+                        
+                        warningOverlay.classList.add('active');
+                        dangerOverlay.classList.remove('active');
+                        document.getElementById('warningTitle').innerText = t.WARNING;
+                        document.getElementById('warningDesc').innerText = t.FOCUS;
+ 
+                        playAlarm('warning');
+                        speak(alertKey);
+                        
+                        // Update Bus Status to WARNING
+                        if (busId) BusTracker.setStatus('WARNING');
+
+                    } else {
+                        // SAFE STATE - Stop any ongoing speech/alerts
+                        stopSpeech();
+                        
+                        statusPanel.className = 'status-panel';
+                        const ui = alertTranslations[preferredLang]?.UI || alertTranslations.English.UI;
+                        statusLabel.innerText = ui['SYSTEM_ACTIVE'] || 'SYSTEM ACTIVE';
+                        statusDot.style.background = '#10b981';
+                        statusDetails.innerText = ui['MONITORING_DESC'] || 'All systems normal. Monitoring...';
+                        
+                        warningOverlay.classList.remove('active');
+                        dangerOverlay.classList.remove('active');
+                        
+                        // Update Bus Status to SAFE (In Service)
+                        if (busId) BusTracker.setStatus('SAFE');
+                    }
+                });
+        }
+
+        function testAlarm() {
+            initAudio();
+            playAlarm('danger');
+            setTimeout(() => playAlarm('warning'), 500);
+            speak('SAFE');
+        }
+
+        setInterval(updateUI, 1000);
+        function translateUI() {
+            const lang = preferredLang || 'English';
+            const ui = alertTranslations[lang]?.UI || alertTranslations.English.UI;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (ui[key]) {
+                    if (el.tagName === 'INPUT' && el.type === 'button') {
+                        el.value = ui[key];
+                    } else {
+                        el.textContent = ui[key];
+                    }
+                }
+            });
+        }
+
+        // Initialize speech synthesis on page load
+        function initSpeechSynthesis() {
+            // Ensure speech synthesis is ready
+            if ('speechSynthesis' in window) {
+                // Cancel any pending utterances
+                window.speechSynthesis.cancel();
+                console.log('✅ Speech synthesis initialized');
+                return true;
+            }
+            console.warn('❌ Speech synthesis not supported');
+            return false;
+        }
+
+        // Announce monitoring start with retry logic
+        function announceMonitoringStart() {
+            if (!('speechSynthesis' in window)) {
+                console.warn('❌ Speech synthesis not supported, skipping start announcement');
+                return;
+            }
+
+            // Initialize speech synthesis
+            initSpeechSynthesis();
+
+            const text = alertTranslations[preferredLang]?.['START'] || alertTranslations['English']['START'];
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = langMap[preferredLang] || 'en-IN';
+            utterance.rate = 0.8;
+            utterance.volume = 1.0;
+            utterance.pitch = 1.0;
+
+            utterance.onstart = () => {
+                console.log('✅ Monitoring start announcement started:', text.substring(0, 50) + '...');
+            };
+
+            utterance.onend = () => {
+                console.log('✅ Monitoring start announcement completed');
+            };
+
+            utterance.onerror = (event) => {
+                console.warn('❌ Monitoring start announcement error:', event.error);
+                // Retry once after a short delay
+                setTimeout(() => {
+                    console.log('Retrying monitoring start announcement...');
+                    window.speechSynthesis.speak(utterance);
+                }, 500);
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        window.onload = () => {
+            console.log('Driver dashboard onload - preferredLang:', preferredLang);
+            console.log('alertTranslations keys:', Object.keys(alertTranslations));
+            console.log('Hindi UI translations:', alertTranslations['Hindi']?.UI);
+            translateUI();
+            
+            // Check for location permission after a short delay
+            setTimeout(() => {
+                if (busId) {
+                    checkLocationPermission();
+                } else {
+                    console.warn('⚠️ No bus assignment - skipping location permission check');
+                }
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

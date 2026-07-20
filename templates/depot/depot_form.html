@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if depot %}Edit{% else %}Create{% endif %} Depot</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified-theme.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body style="background-color: #ecf0f1;">
+    <div class="container mt-5 mb-5">
+        <a href="{{ url_for('manage_depots') }}" class="btn btn-outline-secondary mb-3">← Back</a>
+        
+        <div class="row">
+            <!-- Form Column -->
+            <div class="col-md-5">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">{% if depot %}Edit{% else %}Create{% endif %} Depot</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if error %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                        {% endif %}
+                        
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Depot Name</label>
+                                <input type="text" class="form-control" name="name" required 
+                                       placeholder="e.g. South Chennai Depot"
+                                       value="{{ depot.name if depot else '' }}">
+                            </div>
+                            
+                            <div class="mb-2">
+                                <label class="form-label fw-bold">Coordinates</label>
+                                <p class="text-muted small mb-2">Click on the map to set location automatically.</p>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <input type="number" step="any" class="form-control" name="latitude" id="lat" required
+                                               value="{{ depot.current_latitude if depot else '13.0827' }}">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="number" step="any" class="form-control" name="longitude" id="lon" required
+                                               value="{{ depot.current_longitude if depot else '80.2707' }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Address/Location Search</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="location" id="location-input" required 
+                                           placeholder="e.g. Koyambedu Bus Terminus"
+                                           value="{{ depot.location if depot else '' }}">
+                                    <button class="btn btn-primary" type="button" id="search-btn">
+                                        <i class="fas fa-search"></i> Search Map
+                                    </button>
+                                </div>
+                                <div id="search-status" class="form-text text-muted">Enter a real-world place and click Search to auto-place the marker.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">City</label>
+                                <input type="text" class="form-control" name="city" required 
+                                       value="{{ depot.city if depot else '' }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Manager Name</label>
+                                <input type="text" class="form-control" name="manager_name" 
+                                       value="{{ depot.manager_name if depot else '' }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Contact Phone</label>
+                                <input type="tel" class="form-control" name="contact_phone" 
+                                       value="{{ depot.contact_phone if depot else '' }}">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success w-100 py-2 fw-bold">
+                                {% if depot %}Update{% else %}Create{% endif %} Depot
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Column -->
+            <div class="col-md-7">
+                <div class="card shadow" style="height: 100%;">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">Location Picker</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="picker-map" style="height: 600px; width: 100%;"></div>
+                    </div>
+                    <div class="card-footer bg-light text-center small">
+                        Drag the blue marker, click anywhere, or use the Search button to set the depot location.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const latInput = document.getElementById('lat');
+            const lonInput = document.getElementById('lon');
+            const searchBtn = document.getElementById('search-btn');
+            const locationInput = document.getElementById('location-input');
+            const searchStatus = document.getElementById('search-status');
+            
+            let startLat = parseFloat(latInput.value) || 13.0827;
+            let startLon = parseFloat(lonInput.value) || 80.2707;
+            
+            const map = L.map('picker-map').setView([startLat, startLon], 12);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            let marker = L.marker([startLat, startLon], {
+                draggable: true
+            }).addTo(map);
+            
+            function updatePosition(lat, lon) {
+                latInput.value = lat.toFixed(6);
+                lonInput.value = lon.toFixed(6);
+                marker.setLatLng([lat, lon]);
+                map.flyTo([lat, lon], 15);
+            }
+            
+            // Update inputs when marker is dragged
+            marker.on('dragend', function(e) {
+                const position = marker.getLatLng();
+                latInput.value = position.lat.toFixed(6);
+                lonInput.value = position.lng.toFixed(6);
+            });
+            
+            // Move marker and update inputs when map is clicked
+            map.on('click', function(e) {
+                updatePosition(e.latlng.lat, e.latlng.lng);
+            });
+
+            // Update marker when inputs change manually
+            [latInput, lonInput].forEach(input => {
+                input.addEventListener('change', function() {
+                    const lat = parseFloat(latInput.value) || 0;
+                    const lon = parseFloat(lonInput.value) || 0;
+                    updatePosition(lat, lon);
+                });
+            });
+
+            // Real-world location search (Geocoding)
+            searchBtn.addEventListener('click', async function() {
+                const query = locationInput.value.trim();
+                if (!query) {
+                    searchStatus.innerHTML = '<span class="text-danger">Please enter a location first.</span>';
+                    return;
+                }
+                
+                searchStatus.innerHTML = '<span class="text-primary"><i class="fas fa-spinner fa-spin"></i> Searching real-world data...</span>';
+                
+                async function performSearch(searchTerm) {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchTerm)}&limit=1`);
+                    return await response.json();
+                }
+
+                try {
+                    let data = await performSearch(query);
+                    
+                    // Fallback 1: Try adding spaces if it looks like a concatenated name (like haledevasandra -> hale devasandra)
+                    if ((!data || data.length === 0) && query.toLowerCase().includes('haledevasandra')) {
+                        const modifiedQuery = query.toLowerCase().replace('haledevasandra', 'Hale Devasandra');
+                        data = await performSearch(modifiedQuery);
+                    }
+
+                    // Fallback 2: If still nothing, try adding "Bengaluru" or "India"
+                    if (!data || data.length === 0) {
+                        data = await performSearch(query + ', Bangalore, India');
+                    }
+                    
+                    if (data && data.length > 0) {
+                        const result = data[0];
+                        updatePosition(parseFloat(result.lat), parseFloat(result.lon));
+                        searchStatus.innerHTML = `<span class="text-success"><i class="fas fa-check"></i> Found: ${result.display_name.split(',')[0]}</span>`;
+                    } else {
+                        searchStatus.innerHTML = '<span class="text-danger"><i class="fas fa-times"></i> Location not found. Try "Hale Devasandra, Bangalore".</span>';
+                    }
+                } catch (error) {
+                    searchStatus.innerHTML = '<span class="text-danger">Error fetching location data.</span>';
+                    console.error('Geocoding error:', error);
+                }
+            });
+            
+            // Trigger search on Enter key
+            locationInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchBtn.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

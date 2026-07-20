@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depot Dashboard — Surakshit Yatra</title>
+    <!-- Use Inter font for a modern, premium look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    
+    <style>
+        :root {
+            /* Color Palette */
+            --bg-body: #f4f6f9;
+            --bg-dark: #1e293b;
+            --bg-darker: #0f172a;
+            --text-main: #334155;
+            --text-light: #64748b;
+            --text-white: #ffffff;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --success-dark: #059669;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --warning-dark: #d97706;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-card: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            overflow-x: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 250px;
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 20;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background-color: var(--bg-darker);
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: #cbd5e1;
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255,255,255,0.05);
+            color: var(--text-white);
+        }
+
+        .nav-item.active {
+            background-color: var(--primary);
+            color: var(--text-white);
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5);
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .nav-mt-auto {
+            margin-top: auto;
+        }
+
+        /* --- Main Content --- */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Top Bar */
+        .topbar {
+            background-color: var(--bg-darker);
+            color: var(--text-white);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            z-index: 10;
+        }
+
+        .topbar h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #f8fafc;
+        }
+
+        /* Dashboard Scrollable Area */
+        .dashboard-content {
+            padding: 1.5rem 2rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--text-white);
+            border-radius: var(--radius-xl);
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            box-shadow: var(--shadow-card);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+        }
+
+        .icon-green { background: #dcfce7; color: #16a34a; }
+        .icon-yellow { background: #fef3c7; color: #d97706; }
+        .icon-red { background: #fee2e2; color: #dc2626; }
+        .icon-blue { background: #dbeafe; color: #2563eb; }
+
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--bg-darker);
+            line-height: 1;
+        }
+
+        /* Main Grid (Map + Alerts + Driver Table) */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr 1.5fr;
+            gap: 1.5rem;
+            height: calc(100vh - 220px);
+            min-height: 500px;
+        }
+
+        /* Card Base */
+        .card {
+            background: var(--text-white);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-card);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--bg-darker);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Map Card */
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: var(--radius-md);
+            z-index: 1;
+        }
+
+        .map-wrapper {
+            padding: 10px;
+            height: 100%;
+        }
+
+        /* Alerts List */
+        .alerts-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            background: #fff;
+            gap: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .alert-item:hover {
+            transform: scale(1.01);
+        }
+
+        .alert-danger {
+            background-color: var(--danger-light);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        
+        .alert-warning {
+            background-color: var(--warning-light);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .alert-success {
+            background-color: var(--success-light);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .alert-icon {
+            font-size: 1.25rem;
+            margin-top: 0.25rem;
+        }
+        .alert-danger .alert-icon { color: var(--danger); }
+        .alert-warning .alert-icon { color: var(--warning-dark); }
+        .alert-success .alert-icon { color: var(--success-dark); }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .alert-bus {
+            font-weight: 700;
+            color: var(--bg-darker);
+        }
+
+        .alert-time {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .alert-msg {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.25rem;
+        }
+
+        .alert-loc {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Driver & Assignment Table */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 0.5rem;
+        }
+
+        .table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table td {
+            padding: 1rem;
+            background: #ffffff;
+            font-size: 0.9rem;
+            vertical-align: middle;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table tr td:first-child {
+            border-left: 1px solid var(--border);
+            border-top-left-radius: var(--radius-md);
+            border-bottom-left-radius: var(--radius-md);
+        }
+
+        .table tr td:last-child {
+            border-right: 1px solid var(--border);
+            border-top-right-radius: var(--radius-md);
+            border-bottom-right-radius: var(--radius-md);
+        }
+
+        .table tbody tr {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .table tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .driver-cell {
+            font-weight: 600;
+            color: var(--bg-darker);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--border);
+        }
+
+        .badge-status {
+            padding: 0.35rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-onduty {
+            background-color: var(--success-light);
+            color: var(--success-dark);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .badge-pending {
+            background-color: var(--warning-light);
+            color: var(--warning-dark);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .bus-badge {
+            background-color: #f1f5f9;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-md);
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        /* Action Buttons */
+        .card-footer {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--border);
+            background: #ffffff;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.25rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+        .btn-success:hover { background-color: var(--success-dark); }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        .btn-purple {
+            background-color: #8b5cf6;
+            color: white;
+        }
+        .btn-purple:hover { background-color: #7c3aed; }
+
+        .view-all-link {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .view-all-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 1400px) {
+            .main-grid {
+                grid-template-columns: 1fr 1fr;
+                height: auto;
+            }
+            .driver-table-card {
+                grid-column: span 2;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified-theme.css') }}">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-bus-alt text-primary" style="color: var(--primary);"></i>
+            <span>DEPOT SYSTEM</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('depot_dashboard') }}" class="nav-item active">
+                <i class="fas fa-home"></i> <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('depot_drivers') }}" class="nav-item">
+                <i class="fas fa-users"></i> <span>Drivers</span>
+            </a>
+            <a href="{{ url_for('fleet_overview') }}" class="nav-item">
+                <i class="fas fa-bus"></i> <span>Buses</span>
+            </a>
+            <a href="{{ url_for('bus_tracking_map') }}" class="nav-item">
+                <i class="fas fa-map-marker-alt"></i> <span>Live Tracking</span>
+            </a>
+            <a href="{{ url_for('manage_routes') }}" class="nav-item">
+                <i class="fas fa-route"></i> <span>Routes</span>
+            </a>
+            <a href="{{ url_for('manage_schedules') }}" class="nav-item">
+                <i class="fas fa-calendar-alt"></i> <span>Schedules</span>
+            </a>
+            <a href="{{ url_for('depot_assignments') }}" class="nav-item">
+                <i class="fas fa-clipboard-list"></i> <span>Assignments</span>
+            </a>
+            <a href="{{ url_for('view_alerts') }}" class="nav-item">
+                <i class="fas fa-bell"></i> <span>Alerts</span>
+            </a>
+            <a href="{{ url_for('reports_page') }}" class="nav-item">
+                <i class="fas fa-chart-line"></i> <span>Reports</span>
+            </a>
+            <a href="{{ url_for('manage_depots') }}" class="nav-item">
+                <i class="fas fa-warehouse"></i> <span>Manage Depots</span>
+            </a>
+            <a href="{{ url_for('depot_logout') }}" class="nav-item nav-mt-auto" style="color: #ef4444;">
+                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+        
+        <!-- Topbar -->
+        <header class="topbar">
+            <h1>DEPOT MANAGEMENT SYSTEM (WEB DASHBOARD)</h1>
+        </header>
+
+        <!-- Dynamic Content Area -->
+        <main class="dashboard-content">
+
+            <!-- Stats Bar -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon icon-green"><i class="fas fa-bus"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-title">Total Buses</span>
+                        <span class="stat-value">{{ total_buses }}</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-yellow"><i class="fas fa-route"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-title">On Duty</span>
+                        <span class="stat-value" id="stat-on-duty">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-red"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-title">Alerts</span>
+                        <span class="stat-value" id="stat-alerts">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-blue"><i class="fas fa-id-card"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-title">Drivers</span>
+                        <span class="stat-value">{{ total_drivers }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Grid Area -->
+            <div class="main-grid">
+                
+                <!-- Map Tracking -->
+                <div class="card map-card">
+                    <div class="card-header">
+                        <span class="card-title">Live Bus Tracking</span>
+                    </div>
+                    <div class="card-body p-0 map-wrapper">
+                        <div id="map"></div>
+                    </div>
+                </div>
+
+                <!-- Live Alerts -->
+                <div class="card alerts-card">
+                    <div class="card-header">
+                        <span class="card-title">Live Alerts</span>
+                        <a href="{{ url_for('view_alerts') }}" class="view-all-link">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="alerts-wrapper" id="live-alerts-list">
+                            <!-- Populated via JS -->
+                            <div class="text-center" style="color: var(--text-light); padding: 2rem;">
+                                <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                <p>Loading alerts...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Drivers Table -->
+                <div class="card driver-table-card">
+                    <div class="card-header">
+                        <span class="card-title">Driver & Assignment Management</span>
+                    </div>
+                    <div class="card-body" style="padding-top: 0;">
+                        <div class="table-responsive">
+                            <table class="table" id="drivers-table">
+                                <thead>
+                                    <tr>
+                                        <th>Driver Name</th>
+                                        <th>Photo</th>
+                                        <th>Bus Number</th>
+                                        <th>Route</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated via JS -->
+                                    <tr>
+                                        <td colspan="5" class="text-center" style="text-align: center; color: var(--text-light); padding: 2rem;">
+                                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                            <p>Loading assignments...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ url_for('add_depot_driver') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add Driver</a>
+                        <a href="{{ url_for('add_bus') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Add Bus</a>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script>
+        // Init Map
+        const map = L.map('map').setView([12.9716, 80.0435], 11); // Defaults near Chennai
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let mapMarkers = {};
+        let hasFitMapToBuses = false;
+
+        function createCustomIcon(colorClass, icon) {
+            return L.divIcon({
+                html: `<div style="background-color: var(--${colorClass}); width: 34px; height: 34px; border-radius: 50%; border: 3px solid white; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                    <i class="fas fa-${icon}"></i>
+                </div>`,
+                className: 'custom-bus-marker',
+                iconSize: [34, 34],
+                iconAnchor: [17, 17],
+                popupAnchor: [0, -15]
+            });
+        }
+
+        const icons = {
+            normal: createCustomIcon('success', 'bus'),
+            warning: createCustomIcon('warning', 'bus'),
+            alert: createCustomIcon('danger', 'bus')
+        };
+
+        async function fetchLiveStatus() {
+            try {
+                const [statusResponse, busesResponse] = await Promise.all([
+                    fetch('/api/depot/live-status'),
+                    fetch('/api/tracking/all-buses')
+                ]);
+
+                if (!statusResponse.ok) return;
+                const data = await statusResponse.json();
+                const busesData = busesResponse.ok ? await busesResponse.json() : { buses: [] };
+
+                // Update Stats
+                document.getElementById('stat-on-duty').textContent = data.counts.on_duty;
+                document.getElementById('stat-alerts').textContent = data.counts.unresolved_alerts;
+
+                // Update Map
+                updateMap(busesData.buses && busesData.buses.length ? busesData.buses : data.drivers_on_duty);
+
+                // Update Alerts List
+                updateAlerts(data.recent_alerts);
+
+                // Update Drivers Table
+                updateDriversTable(data.drivers_on_duty);
+
+            } catch (error) {
+                console.error("Failed to fetch live updates:", error);
+            }
+        }
+
+        function updateMap(buses) {
+            const visiblePoints = [];
+
+            buses.forEach(bus => {
+                let lat = Number(bus.latitude);
+                let lon = Number(bus.longitude);
+                
+                // If coordinates are invalid, missing, or at (0,0), use depot location
+                const isInvalid = !lat || !lon || (Math.abs(lat) < 0.1 && Math.abs(lon) < 0.1);
+                if (isInvalid) {
+                    // Scatter buses slightly so they don't stack on top of each other at the depot
+                    const busIdForOffset = bus.id || bus.bus_id || bus.driver_id || 0;
+                    // Larger scatter (approx 5-10km) to ensure visibility at country-level zoom
+                    const pseudoRandomLatOffset = (Math.sin(busIdForOffset * 999) * 0.08);
+                    const pseudoRandomLonOffset = (Math.cos(busIdForOffset * 999) * 0.08);
+                    
+                    lat = (Number(bus.depot_lat) || 12.9716) + pseudoRandomLatOffset;
+                    lon = (Number(bus.depot_lon) || 80.0435) + pseudoRandomLonOffset;
+                }
+
+                if(Number.isFinite(lat) && Number.isFinite(lon)) {
+                    const id = bus.id || bus.bus_id || bus.driver_id;
+                    let mType = 'normal';
+                    if(bus.has_emergency) {
+                        mType = 'alert';
+                    } else if(bus.status === 'Delayed') {
+                        mType = 'warning';
+                    }
+                    
+                    const markerIcon = icons[mType];
+                    const busNumber = bus.bus_number || 'Bus';
+                    const driverName = bus.driver_name ? `${bus.driver_name}<br>` : '';
+                    const routeName = bus.route_label || bus.route_name || '';
+                    const routeLabel = routeName ? `${routeName}<br>` : '';
+                    const statusText = isInvalid ? ('At ' + (bus.depot_name || 'Depot')) : (bus.status || 'Live');
+                    let popupHTML = `<strong>${busNumber}</strong><br>${driverName}${routeLabel}`;
+
+                    if(bus.has_emergency) {
+                        popupHTML += `<span style="color:red;font-weight:bold;">${bus.emergency_msg}</span><br>`;
+                    } else {
+                        popupHTML += `<span style="color:green;">${statusText}</span><br>`;
+                    }
+                    
+                    if(mapMarkers[id]) {
+                        mapMarkers[id].setLatLng([lat, lon]);
+                        mapMarkers[id].setIcon(markerIcon);
+                        mapMarkers[id].setPopupContent(popupHTML);
+                    } else {
+                        const m = L.marker([lat, lon], {icon: markerIcon}).addTo(map);
+                        m.bindPopup(popupHTML);
+                        mapMarkers[id] = m;
+                    }
+
+                    visiblePoints.push([lat, lon]);
+                }
+            });
+
+            if(visiblePoints.length && !hasFitMapToBuses) {
+                map.fitBounds(visiblePoints, {
+                    padding: [40, 40],
+                    maxZoom: 15
+                });
+                hasFitMapToBuses = true;
+            }
+        }
+
+        function updateAlerts(alerts) {
+            const list = document.getElementById('live-alerts-list');
+            if(!alerts || alerts.length === 0) {
+                list.innerHTML = `<div class="alert-item alert-success">
+                    <i class="fas fa-check-circle alert-icon"></i>
+                    <div class="alert-content">
+                        <div class="alert-header">
+                            <span class="alert-bus">System Clear</span>
+                        </div>
+                        <div class="alert-msg">No active alerts detected.</div>
+                    </div>
+                </div>`;
+                return;
+            }
+
+            let html = '';
+            alerts.forEach(a => {
+                let aClass = 'alert-warning';
+                let icon = 'fas fa-exclamation-triangle';
+                
+                if(a.severity === 'Critical') {
+                    aClass = 'alert-danger';
+                } else if(a.severity === 'Low') {
+                    aClass = 'alert-success';
+                    icon = 'fas fa-check-circle';
+                }
+
+                html += `
+                <div class="alert-item ${aClass}">
+                    <i class="${icon} alert-icon"></i>
+                    <div class="alert-content">
+                        <div class="alert-header">
+                            <span class="alert-bus">${a.bus_number}</span>
+                            <span class="alert-time">${a.time}</span>
+                        </div>
+                        <div class="alert-msg">${a.message}</div>
+                        <div class="alert-loc"><i class="fas fa-map-marker-alt"></i> ${a.location}</div>
+                    </div>
+                </div>`;
+            });
+            list.innerHTML = html;
+        }
+
+        function updateDriversTable(drivers) {
+            const tbody = document.querySelector('#drivers-table tbody');
+            if(!drivers || drivers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No drivers currently on duty.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            drivers.forEach(d => {
+                const photoSrc = d.photo_filename ? `/static/uploads/drivers/${d.photo_filename}` : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(d.driver_name) + '&background=random';
+                
+                let badgeClass = 'badge-onduty';
+                let statusText = 'On Duty';
+                if(d.has_emergency) {
+                    badgeClass = 'badge-pending';
+                    statusText = 'Alert';
+                }
+
+                html += `
+                <tr>
+                    <td class="driver-cell">${d.driver_name}</td>
+                    <td><img src="${photoSrc}" alt="avatar" class="avatar" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(d.driver_name)}&background=random'"></td>
+                    <td><span class="bus-badge">${d.bus_number}</span></td>
+                    <td>${d.route_name}</td>
+                    <td><span class="badge-status ${badgeClass}">${statusText}</span></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // Fetch on load and interval
+        fetchLiveStatus();
+        setInterval(fetchLiveStatus, 15000); // 15s refresh
+    </script>
+</body>
+</html>

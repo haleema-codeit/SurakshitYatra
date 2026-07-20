@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if bus %}Edit{% else %}Add{% endif %} Bus</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified-theme.css') }}">
+</head>
+<body style="background-color: #ecf0f1;">
+    <div class="container mt-5">
+        <a href="{{ url_for('fleet_overview') }}" class="btn btn-outline-secondary mb-3">← Back</a>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5>{% if bus %}Edit{% else %}Add New{% endif %} Bus</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if error %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                        {% endif %}
+                        
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label class="form-label">Bus Number</label>
+                                <input type="text" class="form-control" name="bus_number" required 
+                                       placeholder="e.g., BUS-001"
+                                       value="{{ bus.bus_number if bus else '' }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Depot</label>
+                                <select class="form-select" name="depot_id" required>
+                                    <option value="">Select Depot</option>
+                                    {% for depot in depots %}
+                                    <option value="{{ depot.id }}" 
+                                        {% if bus and bus.depot_id == depot.id %}selected{% endif %}>
+                                        {{ depot.name }} - {{ depot.city }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">License Plate</label>
+                                <input type="text" class="form-control" name="license_plate" required
+                                       value="{{ bus.license_plate if bus else '' }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Capacity (Passengers)</label>
+                                <input type="number" class="form-control" name="capacity" required min="1"
+                                       value="{{ bus.capacity if bus else '' }}">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success w-100">
+                                {% if bus %}Update{% else %}Add{% endif %} Bus
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

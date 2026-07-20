@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Driver Profile | Surakshit Yatra</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0a192f;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .info-area {
+            display: none;
+        }
+
+        .main-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .main-title h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .main-title p {
+            font-size: 1.2rem;
+            color: #7ccb83;
+        }
+
+        .drivers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .driver-card {
+            background: #112240;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid #233554;
+        }
+
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid #7ccb83;
+            margin-bottom: 1.5rem;
+            object-fit: cover;
+        }
+
+        .driver-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .driver-id {
+            color: #7ccb83;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .bus-info {
+            background: #0a192f;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            border: 1px solid #233554;
+        }
+
+        .select-btn {
+            background: #28a745;
+            color: #fff;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .select-btn:hover {
+            background: #218838;
+        }
+
+        .footer-banner {
+            background: #112240;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 3rem;
+            border: 1px solid #233554;
+            text-align: center;
+            max-width: 800px;
+        }
+
+        .bottom-nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-top: auto;
+            padding-top: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="logo-area">
+            <img src="{{ url_for('static', filename='logo_icon.png') }}" alt="Surakshit Yatra" style="height: 50px;">
+            <div>
+                <h2 style="margin: 0;">SURAKSHIT YATRA</h2>
+                <small>Smart Driver Monitoring System</small>
+            </div>
+        </div>
+        <div class="info-area">
+            <div id="clock">10:24 AM</div>
+            <div id="date">20 May 2025</div>
+            <div style="margin-top: 0.5rem; color: #7ccb83;">📍 DEPOT: Central Depot</div>
+        </div>
+    </div>
+
+    <div class="main-title">
+        <h1>SELECT DRIVER <span style="color: #7ccb83;">PROFILE</span></h1>
+        <p>Choose your profile to start monitoring</p>
+    </div>
+
+    <div class="drivers-grid">
+        {% for driver in drivers %}
+        <div class="driver-card">
+            {% if driver.photo_filename %}
+            <img src="{{ url_for('static', filename='uploads/drivers/' + driver.photo_filename) }}"
+                alt="{{ driver.name }}" class="profile-img">
+            {% else %}
+            <div class="profile-img"
+                style="background: #ccc; display: flex; align-items: center; justify-content: center;">👤</div>
+            {% endif %}
+
+            <div class="driver-name">{{ driver.name }}</div>
+            <div class="driver-id">🆔 {{ driver.license_number }}</div>
+
+            <div class="bus-info">
+                🚌 Bus No.<br>
+                <strong style="color: #fff;">{{ driver.assigned_bus_number or 'NOT ASSIGNED' }}</strong>
+            </div>
+
+            <button class="select-btn" onclick="selectDriver('{{ driver.id }}')">
+                SELECT DRIVER >
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="footer-banner">
+        🛡️ Your safety is our priority.<br>
+        Please select your profile to begin your duty.
+    </div>
+
+    <div class="bottom-nav">
+        <span>✅ Surakshit Yatra | Smart Driver Monitoring System</span>
+        <span>❓ Need help? <a href="#" style="color: #7ccb83;">Contact Admin</a></span>
+    </div>
+
+    <script>
+        function selectDriver(driverId) {
+            window.location.href = '/driver/monitoring?driver_id=' + driverId;
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('date').innerText = now.toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts & Notifications</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .alert-card {
+            border-left: 5px solid;
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        .alert-critical { border-left-color: #e74c3c; }
+        .alert-high { border-left-color: #f39c12; }
+        .alert-medium { border-left-color: #3498db; }
+        .alert-low { border-left-color: #27ae60; }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified-theme.css') }}">
+</head>
+<body style="background-color: #ecf0f1;">
+    <div class="container mt-5">
+        <a href="{{ url_for('depot_dashboard') }}" class="btn btn-outline-secondary mb-3">← Back to Dashboard</a>
+        
+        <h1 class="mb-4">Alerts & Notifications</h1>
+
+        <!-- Alert Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>Total Alerts</h5>
+                        <h2 style="color: #3498db;">{{ alert_stats.total }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>Unresolved</h5>
+                        <h2 style="color: #f39c12;">{{ alert_stats.unresolved }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>Critical</h5>
+                        <h2 style="color: #e74c3c;">{{ alert_stats.critical }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Options -->
+        <div class="mb-4">
+            <a href="{{ url_for('view_alerts', filter='unresolved') }}" class="btn btn-outline-primary">Unresolved</a>
+            <a href="{{ url_for('view_alerts', filter='all') }}" class="btn btn-outline-secondary">All Alerts</a>
+        </div>
+
+        <!-- Alerts List -->
+        <h5 class="mb-3">{% if filter_type == 'all' %}All Alerts{% else %}Unresolved Alerts{% endif %}</h5>
+        
+        {% if alerts %}
+            {% for alert in alerts %}
+            <div class="alert-card alert-{{ alert.severity.lower() }}">
+                <div class="row">
+                    <div class="col-md-1">
+                        <i class="fas fa-{% if alert.alert_type == 'No Driver' %}ban{% elif alert.alert_type == 'Bus Delayed' %}exclamation-triangle{% else %}info-circle{% endif %} fa-2x" 
+                           style="color: {% if alert.severity == 'Critical' %}#e74c3c{% elif alert.severity == 'High' %}#f39c12{% else %}#3498db{% endif %};"></i>
+                    </div>
+                    <div class="col-md-8">
+                        <h6 style="color: #2c3e50;">{{ alert.alert_type }}</h6>
+                        <p style="color: #7f8c8d;">{{ alert.message }}</p>
+                        <small style="color: #95a5a6;">{{ alert.created_at }}</small>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <span class="badge bg-{% if alert.severity == 'Critical' %}danger{% elif alert.severity == 'High' %}warning{% else %}info{% endif %} mb-2">
+                            {{ alert.severity }}
+                        </span>
+                        {% if not alert.is_resolved %}
+                        <form method="POST" action="{{ url_for('resolve_alert', alert_id=alert.id) }}" class="d-inline">
+                            <textarea name="resolution_note" class="form-control form-control-sm mb-2" rows="2" placeholder="Resolution note..."></textarea>
+                            <button type="submit" class="btn btn-sm btn-success">Resolve</button>
+                        </form>
+                        {% else %}
+                        <span class="badge bg-success">Resolved</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> No alerts at this time!
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

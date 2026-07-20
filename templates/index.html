@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surakshit Yatra | Minimal Safety Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified-theme.css') }}">
+</head>
+
+<body class="status-safe">
+    <div id="start-overlay" class="start-overlay">
+        <div class="start-content">
+            <h1 style="line-height:1;"><img src="{{ url_for('static', filename='logo.png') }}" alt="Surakshit Yatra" style="height:60px; width:auto;"></h1>
+            <p>System Ready to Monitor</p>
+            <button id="start-btn">START MONITORING</button>
+            <p class="subtext">Required to enable audio & voice alerts</p>
+        </div>
+    </div>
+
+    <div id="alert-bg" class="full-screen-bg"></div>
+
+    <div class="main-container">
+        <header>
+            <div class="logo"><img src="{{ url_for('static', filename='logo.png') }}" alt="Surakshit Yatra" style="height:40px; width:auto;"></div>
+            <div id="clock">--:--:--</div>
+        </header>
+
+        <div class="status-display">
+            <div id="status-icon" class="icon">✅</div>
+            <h1 id="status-title">DRIVING SAFE</h1>
+            <p id="status-desc">System monitoring active</p>
+        </div>
+
+        <!-- High-Intensity Alarm Tone -->
+        <audio id="alarm-sound" loop preload="auto">
+            <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
+        </audio>
+
+        <!-- Hidden Video for background processing -->
+        <div class="video-pip">
+            <img src="{{ url_for('video_feed') }}" alt="Feed" id="feed-img">
+            <div class="pip-label">LIVE FEED</div>
+        </div>
+
+        <div id="drowsy-overlay" class="overlay">
+            <div class="overlay-content">
+                <span class="warning-icon">⚠️</span>
+                <h2>DRIVER DROWSY</h2>
+                <h1>STAY ALERT!</h1>
+                <p>Please take a break immediately</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>

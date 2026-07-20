@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surakshit Yatra - Language Selection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --navy: #0f3460;
+            --green: #2e7d32;
+            --light-bg: #f8fbff;
+            --card-border: #e2e8f0;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            background-image: url('data:image/svg+xml;utf8,<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><path d="M0,800 Q400,600 800,800 T1600,800 L1600,1000 L0,1000 Z" fill="%23e8f0fe" opacity="0.5"/></svg>');
+            background-repeat: no-repeat;
+            background-position: bottom;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            color: var(--text-dark);
+            position: relative;
+        }
+        
+        .city-bg {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 250px;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .header-container {
+            text-align: center;
+            margin-bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo-container {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .title-area h1 {
+            color: var(--navy);
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .title-area p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .selection-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .selection-header h2 {
+            color: var(--navy);
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .selection-header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .language-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            max-width: 600px;
+            width: 100%;
+            margin-bottom: 2rem;
+            z-index: 10;
+        }
+
+        .lang-card {
+            background: white;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem 1.2rem;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            position: relative;
+        }
+
+        .lang-card:hover {
+            border-color: var(--navy);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+        }
+
+        .lang-card.active {
+            border-color: var(--navy);
+            background-color: #f8faff;
+        }
+
+        .lang-icon {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .lang-icon img {
+            width: 28px;
+            height: 20px;
+            object-fit: cover;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .lang-info {
+            flex-grow: 1;
+            text-align: left;
+        }
+
+        .lang-native {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--navy);
+            display: block;
+            margin-bottom: 0.1rem;
+        }
+
+        .lang-english {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: block;
+        }
+
+        .radio-btn {
+            width: 22px;
+            height: 22px;
+            border: 2px solid #cbd5e1;
+            border-radius: 50%;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .lang-card.active .radio-btn {
+            border-color: var(--navy);
+        }
+
+        .lang-card.active .radio-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background-color: var(--navy);
+            border-radius: 50%;
+        }
+
+        .continue-btn {
+            background-color: var(--navy);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            width: 100%;
+            max-width: 400px;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(15, 52, 96, 0.2);
+            z-index: 10;
+        }
+
+        .continue-btn:hover {
+            background-color: #0a2444;
+        }
+
+        .tap-to-hear {
+            margin-top: 1.5rem;
+            color: #2563eb;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            z-index: 10;
+        }
+        
+        .tap-to-hear:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .language-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        #speaker-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            color: var(--navy);
+            background: white;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            opacity: 0.4;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .pulse {
+            animation: speaker-pulse 1s infinite;
+        }
+
+        @keyframes speaker-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(15, 52, 96, 0.4); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(15, 52, 96, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(15, 52, 96, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="city-bg">
+        <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 1440 250" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#e2e8f0" fill-opacity="0.4" d="M0,150L48,145C96,140,192,130,288,135C384,140,480,160,576,165C672,170,768,160,864,145C960,130,1056,110,1152,105C1248,100,1344,110,1392,115L1440,120L1440,250L1392,250C1344,250,1248,250,1152,250C1056,250,960,250,864,250C768,250,672,250,576,250C480,250,384,250,288,250C192,250,96,250,48,250L0,250Z"></path>
+            <rect x="50" y="80" width="40" height="170" fill="#cbd5e1" opacity="0.6"/>
+            <rect x="110" y="40" width="60" height="210" fill="#94a3b8" opacity="0.5"/>
+            <rect x="190" y="100" width="50" height="150" fill="#cbd5e1" opacity="0.6"/>
+            <rect x="1100" y="60" width="50" height="190" fill="#94a3b8" opacity="0.5"/>
+            <rect x="1180" y="30" width="70" height="220" fill="#cbd5e1" opacity="0.6"/>
+            <rect x="1280" y="90" width="45" height="160" fill="#94a3b8" opacity="0.5"/>
+        </svg>
+    </div>
+
+    <div id="speaker-indicator">
+        <i class="fa-solid fa-volume-high"></i>
+    </div>
+
+    <div class="header-container">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='logo_reference_exact.png') }}" alt="Surakshit Yatra Logo">
+        </div>
+        <div class="title-area">
+            <h1>SURAKSHIT YATRA</h1>
+            <p>Driver monitoring and management system</p>
+        </div>
+    </div>
+
+    <div class="selection-header">
+        <h2>Select Your Language</h2>
+        <p>Please choose your preferred language</p>
+    </div>
+
+    <div class="language-grid" id="lang-grid">
+        <!-- Filled by JS -->
+    </div>
+
+    <button class="continue-btn" onclick="submitLanguage()">
+        Continue <i class="fa-solid fa-arrow-right"></i>
+    </button>
+
+
+    <script>
+        let voices = [];
+        let audioUnlocked = false;
+
+        function initVoices() {
+            voices = window.speechSynthesis.getVoices();
+            console.log("🎤 Available voices:", voices.length);
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = initVoices;
+            initVoices();
+        }
+
+        const languages = [
+            { code: 'hi', native: 'हिन्दी', english: 'Hindi', flag: 'https://flagcdn.com/w40/in.png', text: 'सुरक्षित यात्रा में आपका स्वागत है। कृपया अपनी भाषा चुनें।' },
+            { code: 'ta', native: 'தமிழ்', english: 'Tamil', flag: '', text: 'சுரக்ஷித் யாத்ராவுக்கு வரவேற்கிறோம். உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்.' },
+            { code: 'te', native: 'తెలుగు', english: 'Telugu', flag: '', text: 'సురక్షిత్ యాత్రకు స్వాగతం. దయచేసి మీ భాషను ఎంచుకోండి.' },
+            { code: 'kn', native: 'ಕನ್ನಡ', english: 'Kannada', flag: '', text: 'ಸುರಕ್ಷಿತ್ ಯಾತ್ರಾಗೆ ಸ್ವಾಗತ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ.' },
+            { code: 'bn', native: 'বাংলা', english: 'Bengali', flag: '', text: 'সুরক্ষিত যাত্রায় আপনাকে স্বাগত। অনুগ্রহ করে আপনার ভাষা নির্বাচন করুন।' },
+            { code: 'en', native: 'English', english: 'English', flag: 'https://flagcdn.com/w40/gb.png', text: 'Welcome to Surakshit Yatra. Please choose your preferred language.' }
+        ];
+
+        let selectedLang = 'en';
+
+        const grid = document.getElementById('lang-grid');
+
+        function renderGrid() {
+            grid.innerHTML = '';
+            languages.forEach(lang => {
+                const isActive = selectedLang === lang.code;
+                const card = document.createElement('div');
+                card.className = `lang-card ${isActive ? 'active' : ''}`;
+                card.onclick = () => selectLanguage(lang.code);
+                
+
+                let iconHTML = '';
+                if (lang.code === 'en') {
+                    iconHTML = `<i class="fa-solid fa-globe" style="color: var(--navy); font-size: 1.2rem;"></i>`;
+                } else if (lang.flag) {
+                    iconHTML = `<img src="${lang.flag}" alt="${lang.english} flag">`;
+                } else {
+                    iconHTML = `<div style="width: 28px; height: 28px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.8rem; font-weight: bold;">${lang.native.charAt(0)}</div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="lang-icon">${iconHTML}</div>
+                    <div class="lang-info">
+                        <span class="lang-native">${lang.native}</span>
+                        <span class="lang-english">${lang.english}</span>
+                    </div>
+                    <div class="radio-btn"></div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function selectLanguage(code) {
+            selectedLang = code;
+            const selected = languages.find(l => l.code === code);
+            playVoice(selected);
+            renderGrid();
+        }
+
+        let lastSpeechTime = 0;
+        let lastSpeechText = '';
+
+        function playVoice(langObj) {
+            if (!('speechSynthesis' in window)) return;
+            
+            // Aggressive unsticking for browser speech queue bugs
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(langObj.text);
+            const langMap = {
+                'en': 'en-IN', 'hi': 'hi-IN', 'ta': 'ta-IN', 'te': 'te-IN', 
+                'kn': 'kn-IN', 'ml': 'ml-IN', 'bn': 'bn-IN', 'mr': 'mr-IN', 
+                'gu': 'gu-IN', 'pa': 'pa-IN'
+            };
+            const targetLang = langMap[langObj.code] || 'en-US';
+            utterance.lang = targetLang;
+            
+            const voice = voices.find(v => v.lang.includes(targetLang) || v.lang.startsWith(targetLang.split('-')[0]));
+            if (voice) utterance.voice = voice;
+            
+            utterance.rate = 1.0;
+            utterance.onstart = () => showSpeakerPulse();
+            
+            // Short timeout helps clear the queue before speaking
+            setTimeout(() => {
+                window.speechSynthesis.speak(utterance);
+            }, 50);
+        }
+
+        let greetingSpoken = false;
+
+        document.body.addEventListener('click', () => {
+            if (!audioUnlocked) {
+                audioUnlocked = true;
+                const dummy = new SpeechSynthesisUtterance("");
+                window.speechSynthesis.speak(dummy);
+                
+                if (!greetingSpoken) {
+                    const en = languages.find(l => l.code === 'en');
+                    playVoice(en);
+                    greetingSpoken = true;
+                }
+            }
+        }, { once: true });
+
+        function showSpeakerPulse() {
+            const speaker = document.getElementById('speaker-indicator');
+            if (!speaker) return;
+            speaker.style.opacity = '1';
+            speaker.classList.add('pulse');
+            setTimeout(() => {
+                speaker.classList.remove('pulse');
+                speaker.style.opacity = '0.4';
+            }, 1500);
+        }
+
+
+        async function submitLanguage() {
+            const selected = languages.find(l => l.code === selectedLang) || languages[9];
+            await fetch('/api/system/set-language', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ language: selected.english })
+            });
+            window.location.href = '/mode-select';
+        }
+
+        renderGrid();
+    </script>
+</body>
+</html>

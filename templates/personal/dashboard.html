@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surakshit Yatra - Personal Monitoring</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3c72;
+            --secondary: #2a5298;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --safe: #10b981;
+            --bg-light: #f5f7fa;
+            --text-dark: #1e293b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Outfit', sans-serif; background: var(--bg-light); color: var(--text-dark); overflow-x: hidden; }
+        
+        .app-wrapper { display: flex; min-height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .sidebar-header { padding: 0 1.5rem; margin-bottom: 3rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .logo { font-size: 1.2rem; font-weight: 800; letter-spacing: 1px; color: white; text-decoration: none; }
+        
+        .sidebar-nav { margin-bottom: auto; }
+        .nav-item { display: flex; align-items: center; padding: 1rem 1.5rem; color: rgba(255, 255, 255, 0.7); text-decoration: none; transition: all 0.3s ease; gap: 1rem; border-left: 4px solid transparent; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.1); color: white; }
+        .nav-item.active { background: rgba(255, 255, 255, 0.15); color: white; border-left-color: #10b981; }
+        .reset-btn-nav { display: flex; align-items: center; gap: 0.8rem; color: rgba(255, 255, 255, 0.7); text-decoration: none; padding: 1rem 1.5rem; transition: all 0.3s ease; margin-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .reset-btn-nav:hover { background: rgba(255, 255, 255, 0.1); color: white; }
+
+        /* Main Content */
+        .main-content { margin-left: 280px; flex: 1; display: flex; flex-direction: column; }
+        .top-bar { background: white; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+        .top-bar h1 { font-size: 1.8rem; color: #1e3c72; font-weight: 700; }
+        .mode-badge { background: #fffbeb; color: #f59e0b; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; border: 1px solid #fef3c7; }
+        
+        .content-area { flex: 1; padding: 2rem; overflow-y: auto; }
+        
+        .monitor-grid { display: grid; grid-template-columns: 1fr 380px; gap: 2rem; }
+        .video-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; }
+        .video-header { background: #1e3c72; padding: 1rem 1.5rem; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .video-container { background: #000; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; position: relative; }
+        #video_feed { width: 100%; height: 100%; object-fit: cover; }
+        
+        .controls-card { display: flex; flex-direction: column; gap: 1.5rem; }
+        .status-panel { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-left: 6px solid #10b981; transition: all 0.3s; }
+        .status-panel.warning { border-left-color: #f59e0b; background: #fffbeb; }
+        .status-panel.danger { border-left-color: #ef4444; background: #fef2f2; }
+        
+        .status-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem; font-weight: 700; font-size: 1.1rem; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; background: #10b981; }
+        .status-dot.pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+
+        .setup-card { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .setup-card h3 { font-size: 1.1rem; margin-bottom: 1rem; color: #1e3c72; display: flex; align-items: center; gap: 0.5rem; }
+        
+        .input-group { margin-bottom: 1rem; }
+        label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 0.4rem; }
+        input { width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 0.9rem; transition: 0.3s; }
+        input:focus { outline: none; border-color: #3b82f6; background: white; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        
+        .btn-save { width: 100%; padding: 0.8rem; background: #1e3c72; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 0.5rem; }
+        .btn-save:hover { background: #1a365d; transform: translateY(-1px); }
+        .btn-test { width: 100%; padding: 0.8rem; background: #f5f7fa; color: #475569; border: 1px solid #e2e8f0; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 0.5rem; }
+        .btn-test:hover { background: #e2e8f0; }
+
+        /* ALERT OVERLAYS */
+        .alert-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000;
+            display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px);
+        }
+        .alert-overlay.active { display: flex; }
+        .alert-overlay.warning { background: rgba(245, 158, 11, 0.9); }
+        .alert-overlay.danger { background: rgba(239, 68, 68, 0.9); }
+        
+        .alert-card {
+            background: white; padding: 3rem; border-radius: 24px; text-align: center; max-width: 500px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: slideUp 0.4s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .alert-icon { font-size: 5rem; margin-bottom: 1rem; }
+        .alert-title { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; color: #1e3c72; }
+        .alert-desc { font-size: 1.2rem; color: #666; font-weight: 500; }
+
+        .log-card { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-top: 1rem; }
+        .log-header { font-weight: 700; color: #1e3c72; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .alert-log { height: 150px; overflow-y: auto; font-size: 0.85rem; color: #64748b; display: flex; flex-direction: column; gap: 0.5rem; }
+        .log-entry { padding-bottom: 0.5rem; border-bottom: 1px solid #f1f5f9; }
+
+        @media (max-width: 1100px) {
+            .sidebar { width: 80px; }
+            .sidebar .logo, .sidebar span { display: none; }
+            .main-content { margin-left: 80px; }
+            .monitor-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/" class="logo">SURAKSHIT YATRA</a>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active">📹 <span data-i18n="MONITORING">Monitoring</span></a>
+                <a href="/api/system/reset-mode" class="reset-btn-nav">↺ <span data-i18n="RESET_MODE">Reset Mode</span></a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <h1 data-i18n="DASHBOARD_TITLE">Personal Safety Dashboard</h1>
+                <div class="mode-badge" data-i18n="PERSONAL_MODE">PERSONAL MODE</div>
+            </header>
+
+            <div class="content-area">
+                <div class="monitor-grid">
+                    <div class="video-section">
+                        <div class="video-card">
+                            <div class="video-header">
+                                <span>📹 <span data-i18n="LIVE_FEED">Live Feed</span></span>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div class="status-dot pulse" style="background: #ef4444;"></div> <span data-i18n="LIVE">LIVE</span>
+                                </div>
+                            </div>
+                            <div class="video-container">
+                                <img id="video_feed" src="/video_feed" alt="Live Feed">
+                                <div id="loader" style="position: absolute; text-align: center;">
+                                    <div style="font-size: 3rem; margin-bottom: 1rem;">🛰️</div>
+                                    <p style="font-weight: 700; opacity: 0.8; color: white;" data-i18n="ESTABLISHING_LINK">Establishing AI Link...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="log-card">
+                            <div class="log-header">
+                                <span data-i18n="DETECTION_LOG">Detection Log</span>
+                                <span style="font-size: 0.7rem; color: #94a3b8;" data-i18n="AUTO_UPDATE">AUTO-UPDATE</span>
+                            </div>
+                            <div id="alert-log" class="alert-log">
+                                <div class="log-entry" data-i18n="AI_INIT">AI Monitor initialized...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="controls-card">
+                        <div id="status-panel" class="status-panel">
+                            <div class="status-header">
+                                <div id="status-dot" class="status-dot"></div>
+                                <span id="status-text" data-i18n="SAFE">SYSTEM ACTIVE</span>
+                            </div>
+                            <div id="status-desc" style="color: #64748b; font-size: 0.9rem; line-height: 1.5;" data-i18n="MONITORING_DESC_SAFE">
+                                Monitoring for eye closure, head movement, and road attention.
+                            </div>
+                        </div>
+
+                        <div class="setup-card">
+                            <h3 data-i18n="EMERGENCY_CONTACT">🆘 Emergency Contact</h3>
+                            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1.2rem;" data-i18n="CONTACT_DESC">SMS will be sent here if critical drowsiness is detected.</p>
+                            
+                            <div class="input-group">
+                                <label data-i18n="NAME">Full Name</label>
+                                <input type="text" id="contact-name" placeholder="E.g. Rajesh Kumar" value="{{ session.get('personal_contact_name', '') }}">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label data-i18n="PHONE">Mobile Number</label>
+                                <input type="tel" id="contact-phone" placeholder="E.g. +91 98765 43210" value="{{ session.get('personal_contact_phone', '') }}">
+                            </div>
+                            
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn-save" onclick="saveContact()" style="flex: 2;" data-i18n="SAVE_SETTINGS">SAVE</button>
+                                <button class="btn-test" onclick="triggerManualTest()" style="flex: 1;" data-i18n="TEST">TEST</button>
+                            </div>
+                            
+                            <p id="save-status" style="font-size: 0.8rem; text-align: center; margin-top: 10px; display: none; color: var(--safe); font-weight: 700;" data-i18n="SETTINGS_SYNCED">✅ Settings Synced!</p>
+                            <p id="sms-indicator" style="font-size: 0.75rem; text-align: center; margin-top: 8px; color: #94a3b8;"><span data-i18n="SMS_SYSTEM">📡 SMS System:</span> <span id="sms-badge" style="color: var(--safe);" data-i18n="READY">Ready</span></p>
+                        </div>
+
+                        <div class="status-panel" style="border-left-color: #3b82f6;">
+                            <div class="status-header">💡 <span data-i18n="QUICK_TIPS">Quick Tips</span></div>
+                            <ul style="font-size: 0.85rem; color: #64748b; padding-left: 1.2rem; line-height: 1.6;">
+                                <li>Ensure good lighting on face</li>
+                                <li>Camera should be at eye level</li>
+                                <li>Avoid wearing dark sunglasses</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ALERT OVERLAYS -->
+    <div id="danger-overlay" class="alert-overlay danger">
+        <div class="alert-card">
+            <div class="alert-icon">🚨</div>
+            <div class="alert-title" id="overlay-title" data-i18n="DANGER_TITLE">WAKE UP!</div>
+            <div class="alert-desc" id="overlay-desc" data-i18n="DANGER_DESC">DRIVING HAZARD DETECTED</div>
+        </div>
+    </div>
+
+    <div id="warning-overlay" class="alert-overlay warning">
+        <div class="alert-card">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-title" id="warning-title" data-i18n="WARNING_TITLE">WARNING</div>
+            <div class="alert-desc" id="warning-desc" data-i18n="WARNING_DESC">PLEASE FOCUS ON THE ROAD</div>
+        </div>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status-text');
+        const statusDot = document.getElementById('status-dot');
+        const statusDesc = document.getElementById('status-desc');
+        const statusPanel = document.getElementById('status-panel');
+        const logEl = document.getElementById('alert-log');
+        const dangerOverlay = document.getElementById('danger-overlay');
+        const warningOverlay = document.getElementById('warning-overlay');
+        const videoFeed = document.getElementById('video_feed');
+        const loader = document.getElementById('loader');
+
+        const preferredLanguage = "{{ session.get('preferred_language', 'English') }}";
+        const langMap = {
+            'English': 'en-IN', 'Hindi': 'hi-IN', 'Tamil': 'ta-IN', 'Telugu': 'te-IN', 
+            'Kannada': 'kn-IN', 'Bengali': 'bn-IN'
+        };
+
+        let lastVoiceAlertTime = 0;
+        let lastVoiceAlertMessage = '';
+        let audioContext = null;
+        let lastAlarmTime = 0;
+        let lastWarningAlarmTime = 0;
+        let lastAlertState = false;
+        let lastStatusMsg = '';
+        let emergencyActive = false;
+        let warningStartTime = 0; // TRACK WARNING START TIME
+        const WARNING_DELAY_MS = 2000; // 2 SECONDS DELAY BEFORE WARNING OVERLAY
+
+        function initAudioContext() {
+            if (audioContext) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            audioContext = new AudioContext();
+            console.log("Audio Context Initialized");
+        }
+
+        // Resume audio on any user interaction
+        document.addEventListener('click', () => {
+            initAudioContext();
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }, { once: false });
+
+        function playAlarm(type) {
+            initAudioContext();
+            if (!audioContext) return;
+            if (audioContext.state === 'suspended') audioContext.resume();
+
+            if (type === 'danger') {
+                const now = Date.now();
+                if (now - lastAlarmTime < 650) return;
+                lastAlarmTime = now;
+
+                const t = audioContext.currentTime;
+                const master = audioContext.createGain();
+                const compressor = audioContext.createDynamicsCompressor();
+                compressor.threshold.setValueAtTime(-24, t);
+                compressor.knee.setValueAtTime(18, t);
+                compressor.ratio.setValueAtTime(16, t);
+                compressor.attack.setValueAtTime(0.003, t);
+                compressor.release.setValueAtTime(0.16, t);
+                master.connect(compressor);
+                compressor.connect(audioContext.destination);
+
+                master.gain.setValueAtTime(0.0001, t);
+                master.gain.exponentialRampToValueAtTime(0.95, t + 0.03);
+                master.gain.setValueAtTime(0.95, t + 0.82);
+                master.gain.exponentialRampToValueAtTime(0.0001, t + 1.05);
+
+                const sirenHigh = audioContext.createOscillator();
+                sirenHigh.type = 'sawtooth';
+                sirenHigh.frequency.setValueAtTime(620, t);
+                sirenHigh.frequency.linearRampToValueAtTime(1420, t + 0.22);
+                sirenHigh.frequency.linearRampToValueAtTime(700, t + 0.46);
+                sirenHigh.frequency.linearRampToValueAtTime(1550, t + 0.72);
+                sirenHigh.frequency.linearRampToValueAtTime(780, t + 1.02);
+
+                const sirenBite = audioContext.createOscillator();
+                sirenBite.type = 'square';
+                sirenBite.frequency.setValueAtTime(930, t);
+                sirenBite.frequency.linearRampToValueAtTime(1720, t + 0.2);
+                sirenBite.frequency.linearRampToValueAtTime(980, t + 0.45);
+                sirenBite.frequency.linearRampToValueAtTime(1840, t + 0.72);
+                sirenBite.frequency.linearRampToValueAtTime(1040, t + 1.02);
+
+                const lowBuzz = audioContext.createOscillator();
+                lowBuzz.type = 'square';
+                lowBuzz.frequency.setValueAtTime(92, t);
+
+                sirenHigh.connect(master);
+                sirenBite.connect(master);
+                lowBuzz.connect(master);
+                sirenHigh.start(t);
+                sirenBite.start(t);
+                lowBuzz.start(t);
+                sirenHigh.stop(t + 1.05);
+                sirenBite.stop(t + 1.05);
+                lowBuzz.stop(t + 1.05);
+                return;
+            }
+
+            const now = Date.now();
+            if (now - lastWarningAlarmTime < 450) return;
+            lastWarningAlarmTime = now;
+
+            const osc = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            osc.frequency.setValueAtTime(520, audioContext.currentTime);
+            osc.frequency.linearRampToValueAtTime(740, audioContext.currentTime + 0.12);
+            osc.type = 'triangle';
+            gainNode.gain.setValueAtTime(0.38, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.24);
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.24);
+        }
+
+        const alertTranslations = {
+            'English': {
+                'DANGER: DROWSY': 'Critical! Your eyes are closing! Pull over immediately!',
+                'WARNING: SLEEPY': 'Warning! Your eyes are starting to close. Stay alert!',
+                'DANGER: PHONE': 'Critical! Phone detected. Put it away now!',
+                'PHONE USAGE (WARNING)': 'Warning! Phone detected. Put it away now!',
+                'DANGER: HEAD DOWN': 'Critical! Your head is down. Look at the road!',
+                'HEAD DISTRACTION (DOWN)': 'Warning! Keep your head up and eyes on the road!',
+                'DANGER: ROAD ATTENTION LOST': 'Critical! You are not watching the road. Look ahead immediately!',
+                'DANGER: SEVERE FATIGUE': 'Critical fatigue detected! You are yawning excessively. Pull over and rest!',
+                'ROAD ATTENTION WARNING': 'Warning! Your attention is away from the road. Look ahead.',
+                'YAWNING': 'Warning! You are yawning. You may be getting tired.',
+                'SAFE': 'SYSTEM ACTIVE', 'START': 'Monitoring started.', 'CONTACT_SAVED': 'Saved.',
+                'UI': {
+                    'MONITORING': 'Monitoring', 'RESET_MODE': 'Reset Mode', 'DASHBOARD_TITLE': 'Personal Safety Dashboard',
+                    'PERSONAL_MODE': 'PERSONAL MODE', 'LIVE_FEED': 'Live Feed', 'DETECTION_LOG': 'Detection Log',
+                    'SAFE': 'SYSTEM ACTIVE', 'EMERGENCY_CONTACT': '🆘 Emergency Contact', 'CONTACT_DESC': 'SMS will be sent here if critical drowsiness is detected.',
+                    'NAME': 'Full Name', 'PHONE': 'Mobile Number', 'SAVE_SETTINGS': 'SAVE', 'TEST': 'TEST', 'QUICK_TIPS': 'Quick Tips',
+                    'LIVE': 'LIVE', 'ESTABLISHING_LINK': 'Establishing AI Link...', 'AUTO_UPDATE': 'AUTO-UPDATE', 'AI_INIT': 'AI Monitor initialized...',
+                    'MONITORING_DESC_SAFE': 'Monitoring for eye closure, head movement, and road attention.',
+                    'MONITORING_DESC_DANGER': 'Immediate action required!',
+                    'MONITORING_DESC_WARNING': 'Please stay alert and focus on the road.',
+                    'SETTINGS_SYNCED': '✅ Settings Synced!', 'SMS_SYSTEM': '📡 SMS System:', 'READY': 'Ready',
+                    'SMS_DISPATCHED': 'SMS Dispatched', 'SMS_FAILED': 'SMS Failed', 'ERROR': 'Error', 'GPS_ERROR': 'GPS Error',
+                    'DANGER_TITLE': 'WAKE UP!', 'DANGER_DESC': 'DRIVING HAZARD DETECTED',
+                    'WARNING_TITLE': 'WARNING', 'WARNING_DESC': 'PLEASE FOCUS ON THE ROAD'
+                }
+            },
+            'Hindi': {
+                'DANGER: DROWSY': 'खतरा! आपकी आंखें बंद हो रही हैं! तुरंत रुकें!',
+                'WARNING: SLEEPY': 'चेतावनी! आपकी आंखें बंद हो रही हैं। सतर्क रहें!',
+                'DANGER: PHONE': 'खतरा! फोन मिला। इसे अभी रख दें!',
+                'PHONE USAGE (WARNING)': 'चेतावनी! फोन मिला। इसे अभी रख दें!',
+                'DANGER: HEAD DOWN': 'खतरा! आपका सिर नीचे है। सड़क पर देखें!',
+                'HEAD DISTRACTION (DOWN)': 'चेतावनी! अपना सिर ऊपर रखें और सड़क पर ध्यान दें!',
+                'DANGER: ROAD ATTENTION LOST': 'खतरा! आपका ध्यान सड़क पर नहीं है। तुरंत सामने देखें!',
+                'ROAD ATTENTION WARNING': 'चेतावनी! आपका ध्यान सड़क से हट रहा है। सामने देखें।',
+                'YAWNING': 'चेतावनी! आप जम्हाई ले रहे हैं। आप थक सकते हैं।',
+                'SAFE': 'सिस्टम सक्रिय', 'START': 'निगरानी शुरू हो गई है।', 'CONTACT_SAVED': 'सेटिंग्स सुरक्षित हो गईं।',
+                'UI': {
+                    'MONITORING': 'निगरानी', 'RESET_MODE': 'मोड बदलें', 'DASHBOARD_TITLE': 'व्यक्तिगत सुरक्षा डैशबोर्ड',
+                    'PERSONAL_MODE': 'पर्सनल मोड', 'LIVE_FEED': 'लाइव फीड', 'DETECTION_LOG': 'डिटेक्शन लॉग',
+                    'SAFE': 'सिस्टम सक्रिय', 'EMERGENCY_CONTACT': '🆘 आपातकालीन संपर्क', 'CONTACT_DESC': 'गंभीर उनींदापन होने पर यहाँ एसएमएस भेजा जाएगा।',
+                    'NAME': 'पूरा नाम', 'PHONE': 'मोबाइल नंबर', 'SAVE_SETTINGS': 'सुरक्षित करें', 'TEST': 'टेस्ट', 'QUICK_TIPS': 'त्वरित सुझाव',
+                    'LIVE': 'लाइव', 'ESTABLISHING_LINK': 'AI लिंक स्थापित हो रहा है...', 'AUTO_UPDATE': 'ऑटो-अपडेट', 'AI_INIT': 'AI मॉनिटर प्रारंभ...',
+                    'MONITORING_DESC_SAFE': 'आंख बंद, सिर हिलना और सड़क ध्यान की निगरानी।',
+                    'MONITORING_DESC_DANGER': 'तुरंत कार्रवाई आवश्यक!',
+                    'MONITORING_DESC_WARNING': 'कृपया सतर्क रहें और सड़क पर ध्यान दें।',
+                    'SETTINGS_SYNCED': '✅ सेटिंग्स सिंक!', 'SMS_SYSTEM': '📡 SMS सिस्टम:', 'READY': 'तैयार',
+                    'SMS_DISPATCHED': 'SMS भेजा गया', 'SMS_FAILED': 'SMS विफल', 'ERROR': 'त्रुटि', 'GPS_ERROR': 'GPS त्रुटि',
+                    'DANGER_TITLE': 'जागो!', 'DANGER_DESC': 'खतरा पता चला!',
+                    'WARNING_TITLE': 'चेतावनी', 'WARNING_DESC': 'कृपया सड़क पर ध्यान दें'
+                }
+            },
+            'Tamil': {
+                'DANGER: DROWSY': 'ஆபத்து! கண்கள் மூடுகின்றன! உடனே நிறுத்துங்கள்!',
+                'WARNING: SLEEPY': 'எச்சரிக்கை! விழிப்புடன் இருங்கள்!',
+                'DANGER: PHONE': 'ஆபத்து! போனை எடுத்து வை!',
+                'PHONE USAGE (WARNING)': 'எச்சரிக்கை! போனை எடுத்து வை!',
+                'DANGER: HEAD DOWN': 'ஆபத்து! சாலையைப் பாருங்கள்!',
+                'HEAD DISTRACTION (DOWN)': 'எச்சரிக்கை! சாலையைப் பாருங்கள்!',
+                'DANGER: ROAD ATTENTION LOST': 'ஆபத்து! முன்னால் பாருங்கள்!',
+                'ROAD ATTENTION WARNING': 'எச்சரிக்கை! முன்னால் பாருங்கள்.',
+                'YAWNING': 'எச்சரிக்கை! கொட்டாவி விடுகிறீர்கள்.',
+                'SAFE': 'சிஸ்டம் செயலில் உள்ளது',
+                'UI': {
+                    'MONITORING': 'கண்காணிப்பு', 'RESET_MODE': 'மீட்டமைக்க', 'DASHBOARD_TITLE': 'தனிப்பட்ட பாதுகாப்பு',
+                    'PERSONAL_MODE': 'தனிப்பட்ட முறை', 'LIVE_FEED': 'நேரடி', 'DETECTION_LOG': 'பதிவு',
+                    'SAFE': 'செயலில் உள்ளது', 'EMERGENCY_CONTACT': '🆘 அவசர தொடர்பு', 'CONTACT_DESC': 'தூக்கம் கண்டறியப்பட்டால் SMS அனுப்பப்படும்.',
+                    'NAME': 'முழு பெயர்', 'PHONE': 'எண்', 'SAVE_SETTINGS': 'சேமிக்க', 'TEST': 'சோதனை', 'QUICK_TIPS': 'உதவிகள்',
+                    'LIVE': 'நேரடி', 'ESTABLISHING_LINK': 'AI இணைப்பு நிறுவப்படுகிறது...', 'AUTO_UPDATE': 'தானியங்கி புதுப்பிப்பு', 'AI_INIT': 'AI கண்காணிப்பு தொடங்கியது...',
+                    'MONITORING_DESC_SAFE': 'கண் மூடல், தலை அசைவு மற்றும் சாலை கவனம் கண்காணிக்கப்படுகிறது.',
+                    'MONITORING_DESC_DANGER': 'உடனடி நடவடிக்கை தேவை!',
+                    'MONITORING_DESC_WARNING': 'தயவுசெய்து விழிப்புடன் இருங்கள் மற்றும் சாலையில் கவனம் செலுத்துங்கள்.',
+                    'SETTINGS_SYNCED': '✅ அமைப்புகள் ஒத்திசைவு!', 'SMS_SYSTEM': '📡 SMS அமைப்பு:', 'READY': 'தயார்',
+                    'SMS_DISPATCHED': 'SMS அனுப்பப்பட்டது', 'SMS_FAILED': 'SMS தோல்வி', 'ERROR': 'பிழை', 'GPS_ERROR': 'GPS பிழை',
+                    'DANGER_TITLE': 'விழித்திரு!', 'DANGER_DESC': 'அபாயம் கண்டறியப்பட்டது!',
+                    'WARNING_TITLE': 'எச்சரிக்கை', 'WARNING_DESC': 'தயவுசெய்து சாலையில் கவனம் செலுத்துங்கள்'
+                }
+            },
+            'Kannada': {
+                'DANGER: DROWSY': 'ಅಪಾಯ! ಕಣ್ಣು ಮುಚ್ಚುತ್ತಿವೆ!',
+                'WARNING: SLEEPY': 'ಎಚ್ಚರಿಕೆ! ಜಾಗರೂಕರಾಗಿರಿ!',
+                'DANGER: PHONE': 'ಅಪಾಯ! ಫೋನ್ ಇಡಿ!',
+                'PHONE USAGE (WARNING)': 'ಎಚ್ಚರಿಕೆ! ಫೋನ್ ಇಡಿ!',
+                'DANGER: HEAD DOWN': 'ಅಪಾಯ! ರಸ್ತೆ ನೋಡಿ!',
+                'HEAD DISTRACTION (DOWN)': 'ಎಚ್ಚರಿಕೆ! ರಸ್ತೆ ನೋಡಿ!',
+                'DANGER: ROAD ATTENTION LOST': 'ಅಪಾಯ! ಮುಂದೆ ನೋಡಿ!',
+                'ROAD ATTENTION WARNING': 'ಎಚ್ಚರಿಕೆ! ಮುಂದೆ ನೋಡಿ.',
+                'YAWNING': 'ಎಚ್ಚರಿಕೆ! ಆಕಳಿಸುತ್ತಿದ್ದೀರಿ.',
+                'SAFE': 'ಸಿಸ್ಟಮ್ ಸಕ್ರಿಯವಾಗಿದೆ',
+                'UI': {
+                    'MONITORING': 'ಮೇಲ್ವಿಚಾರಣೆ', 'RESET_MODE': 'ಮರುಹೊಂದಿಸಿ', 'DASHBOARD_TITLE': 'ವೈಯಕ್ತಿಕ ಸುರಕ್ಷತಾ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್',
+                    'PERSONAL_MODE': 'ವೈಯಕ್ತಿಕ ಮೋಡ್', 'LIVE_FEED': 'ಲೈವ್ ಫೀಡ್', 'DETECTION_LOG': 'ಲಾಗ್',
+                    'SAFE': 'ಸಿಸ್ಟಮ್ ಸಕ್ರಿಯವಾಗಿದೆ', 'EMERGENCY_CONTACT': '🆘 ತುರ್ತು ಸಂಪರ್ಕ', 'CONTACT_DESC': 'ತೂಕಡಿಕೆ ಕಂಡುಬಂದಲ್ಲಿ ಈ ವ್ಯಕ್ತಿಗೆ SMS ಕಳುಹಿಸಲಾಗುವುದು.',
+                    'NAME': 'ಪೂರ್ಣ ಹೆಸರು', 'PHONE': 'ಮೊಬೈಲ್ ಸಂಖ್ಯೆ', 'SAVE_SETTINGS': 'ಉಳಿಸಿ', 'TEST': 'ಪರೀಕ್ಷೆ', 'QUICK_TIPS': 'ಸಲಹೆಗಳು',
+                    'LIVE': 'ಲೈವ್', 'ESTABLISHING_LINK': 'AI ಲಿಂಕ್ ಸ್ಥಾಪಿಸಲಾಗುತ್ತಿದೆ...', 'AUTO_UPDATE': 'ಸ್ವಯಂ-ಅಪ್ಡೇಟ್', 'AI_INIT': 'AI ಮೇಲ್ವಿಚಾರಣೆ ಆರಂಭಿಸಲಾಗಿದೆ...',
+                    'MONITORING_DESC_SAFE': 'ಕಣ್ಣು ಮುಚ್ಚುವುದು, ತಲೆ ಚಲನೆ ಮತ್ತು ರಸ್ತೆ ಗಮನವನ್ನು ಮೇಲ್ವಿಚಾರಣೆ ಮಾಡಲಾಗುತ್ತಿದೆ.',
+                    'MONITORING_DESC_DANGER': 'ತಕ್ಷಣ ಕ್ರಮ ತೆಗೆದುಕೊಳ್ಳಿ!',
+                    'MONITORING_DESC_WARNING': 'ದಯವಿಟ್ಟು ಜಾಗರೂಕರಾಗಿರಿ ಮತ್ತು ರಸ್ತೆಯ ಮೇಲೆ ಗಮನ ಹರಿಸಿ.',
+                    'SETTINGS_SYNCED': '✅ ಸೆಟ್ಟಿಂಗ್ಸ್ ಸಿಂಕ್!', 'SMS_SYSTEM': '📡 SMS ವ್ಯವಸ್ಥೆ:', 'READY': 'ಸಿದ್ಧ',
+                    'SMS_DISPATCHED': 'SMS ಕಳುಹಿಸಲಾಗಿದೆ', 'SMS_FAILED': 'SMS ವಿಫಲ', 'ERROR': 'ದೋಷ', 'GPS_ERROR': 'GPS ದೋಷ',
+                    'DANGER_TITLE': 'ಎಚ್ಚರ!', 'DANGER_DESC': 'ಅಪಾಯ ಕಂಡುಬಂದಿದೆ!',
+                    'WARNING_TITLE': 'ಎಚ್ಚರಿಕೆ', 'WARNING_DESC': 'ದಯವಿಟ್ಟು ರಸ್ತೆಯ ಮೇಲೆ ಗಮನ ಹರಿಸಿ'
+                }
+            },
+            'Telugu': {
+                'DANGER: DROWSY': 'అపాయం! మీ కళ్లు మూసిపోతున్నాయి! వెంటనే ఆపండి!',
+                'WARNING: SLEEPY': 'హెచ్చరిక! మీ కళ్లు మూసిపోతున్నాయి. జాగ్రత్తగా ఉండండి!',
+                'DANGER: PHONE': 'అపాయం! ఫోన్ గుర్తించబడింది. దానిని ఇప్పుడే పక్కన పెట్టండి!',
+                'PHONE USAGE (WARNING)': 'హెచ్చరిక! ఫోన్ గుర్తించబడింది. దానిని ఇప్పుడే పక్కన పెట్టండి!',
+                'DANGER: HEAD DOWN': 'అపాయం! మీ తల కిందికి ఉంది. రోడ్డును చూడండి!',
+                'HEAD DISTRACTION (DOWN)': 'హెచ్చరిక! మీ తలను పైకి ఉంచి రోడ్డుపై దృష్టి సారించండి!',
+                'DANGER: ROAD ATTENTION LOST': 'అపాయం! మీరు రోడ్డును చూడటం లేదు. వెంటనే ముందు చూడండి!',
+                'DANGER: SEVERE FATIGUE': 'తీవ్రమైన అలసత గుర్తించబడింది! మీరు అధికంగా విసురుతున్నారు. ఆపి విశ్రాంతి తీసుకోండి!',
+                'ROAD ATTENTION WARNING': 'హెచ్చరిక! మీ దృష్టి రోడ్డు నుండి మళ్ళీపోతోంది. ముందు చూడండి.',
+                'YAWNING': 'హెచ్చరిక! మీరు విసురుతున్నారు. మీకు అలసత వస్తుండవచ్చు.',
+                'SAFE': 'సిస్టమ్ యాక్టివ్', 'START': 'మానిటరింగ్ ప్రారంభమైంది.', 'CONTACT_SAVED': 'సేవ్ చేయబడింది.',
+                'UI': {
+                    'MONITORING': 'మానిటరింగ్', 'RESET_MODE': 'మోడ్ మార్చు', 'DASHBOARD_TITLE': 'వ్యక్తిగత భద్రతా డాష్‌బోర్డ్',
+                    'PERSONAL_MODE': 'వ్యక్తిగత మోడ్', 'LIVE_FEED': 'లైవ్ ఫీడ్', 'DETECTION_LOG': 'డిటెక్షన్ లాగ్',
+                    'SAFE': 'సిస్టమ్ యాక్టివ్', 'EMERGENCY_CONTACT': '🆘 అత్యవసర సంప్రదింపు', 'CONTACT_DESC': 'తీవ్రమైన నిద్రలేమి గుర్తించబడితే ఇక్కడ SMS పంపబడుతుంది.',
+                    'NAME': 'పూర్తి పేరు', 'PHONE': 'మొబైల్ నంబర్', 'SAVE_SETTINGS': 'సేవ్ చేయి', 'TEST': 'టెస్ట్', 'QUICK_TIPS': 'శీఘ్ర చిట్కాలు',
+                    'LIVE': 'లైవ్', 'ESTABLISHING_LINK': 'AI లింక్ ఏర్పాటు చేస్తోంది...', 'AUTO_UPDATE': 'ఆటో-అప్‌డేట్', 'AI_INIT': 'AI మానిటరింగ్ ప్రారంభమైంది...',
+                    'MONITORING_DESC_SAFE': 'కన్ను మూత, తల కదలిక మరియు రోడ్డు శ్రద్ధ కోసం మానిటరింగ్.',
+                    'MONITORING_DESC_DANGER': 'వెంటనే చర్య అవసరం!',
+                    'MONITORING_DESC_WARNING': 'దయచేసి అప్రమత్తంగా ఉండండి మరియు రోడ్డుపై దృష్టి పెట్టండి.',
+                    'SETTINGS_SYNCED': '✅ సెట్టింగ్స్ సింక్!', 'SMS_SYSTEM': '📡 SMS సిస్టమ్:', 'READY': 'సిద్ధం',
+                    'SMS_DISPATCHED': 'SMS పంపబడింది', 'SMS_FAILED': 'SMS విఫలమైంది', 'ERROR': 'ఎర్రర్', 'GPS_ERROR': 'GPS ఎర్రర్',
+                    'DANGER_TITLE': 'మేల్కో!', 'DANGER_DESC': 'ప్రమాదం గుర్తించబడింది!',
+                    'WARNING_TITLE': 'హెచ్చరిక', 'WARNING_DESC': 'దయచేసి రోడ్డుపై దృష్టి పెట్టండి'
+                }
+            }
+        };
+
+        let isSpeaking = false;
+        let lastSpokenMessage = '';
+        let lastSpokenTime = 0;
+        let isSpeechLocked = false;
+
+        function speak(messageKey) {
+            if (!('speechSynthesis' in window)) return;
+            
+            const lang = preferredLanguage || 'English';
+            const translation = alertTranslations[lang] && alertTranslations[lang][messageKey] ? alertTranslations[lang][messageKey] : messageKey;
+            
+            // Check if this is a critical alert (DANGER)
+            const isCritical = messageKey.includes('DANGER');
+            
+            // Throttle duplicate alerts (10 seconds for non-critical, 5 seconds for critical)
+            const throttleTime = isCritical ? 5000 : 10000;
+            if (translation === lastSpokenMessage && (Date.now() - lastSpokenTime) < throttleTime) return;
+            
+            // If already speaking or locked, skip - don't queue multiple
+            if (isSpeaking || isSpeechLocked) {
+                console.log('Speech locked, skipping:', messageKey);
+                return;
+            }
+
+            // Cancel any pending speeches first
+            window.speechSynthesis.cancel();
+            
+            // Lock speech to prevent overlapping calls
+            isSpeechLocked = true;
+
+            const utterance = new SpeechSynthesisUtterance(translation);
+            utterance.lang = langMap[lang] || 'en-IN';
+            utterance.rate = 0.85;
+            utterance.volume = 1.0;
+            
+            utterance.onstart = () => {
+                isSpeaking = true;
+                lastSpokenMessage = translation;
+                lastSpokenTime = Date.now();
+                console.log('Speech started:', messageKey);
+            };
+
+            utterance.onend = () => {
+                isSpeaking = false;
+                isSpeechLocked = false;
+                console.log('Speech ended:', messageKey);
+            };
+
+            utterance.onerror = (event) => {
+                isSpeaking = false;
+                isSpeechLocked = false;
+                console.warn('Speech synthesis error:', event.error, messageKey);
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Immediate speech for critical alerts - no throttling, no delay
+        function speakImmediately(messageKey) {
+            if (!('speechSynthesis' in window)) return;
+            
+            const lang = preferredLanguage || 'English';
+            const translation = alertTranslations[lang] && alertTranslations[lang][messageKey] 
+                ? alertTranslations[lang][messageKey] 
+                : messageKey;
+            
+            // If already speaking or locked, skip
+            if (isSpeaking || isSpeechLocked) {
+                console.log('Speech locked (immediate), skipping:', messageKey);
+                return;
+            }
+            
+            // Cancel any ongoing speech immediately
+            window.speechSynthesis.cancel();
+            
+            // Lock speech to prevent overlapping calls
+            isSpeechLocked = true;
+            
+            const utterance = new SpeechSynthesisUtterance(translation);
+            utterance.lang = langMap[lang] || 'en-IN';
+            utterance.rate = 0.9;
+            utterance.volume = 1.0;
+            
+            utterance.onstart = () => {
+                isSpeaking = true;
+                lastSpokenMessage = translation;
+                lastSpokenTime = Date.now();
+                console.log('Speech started (immediate):', messageKey);
+            };
+
+            utterance.onend = () => {
+                isSpeaking = false;
+                isSpeechLocked = false;
+                console.log('Speech ended (immediate):', messageKey);
+            };
+
+            utterance.onerror = (event) => {
+                isSpeaking = false;
+                isSpeechLocked = false;
+                console.warn('Speech synthesis error:', event.error, messageKey);
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Function to stop any ongoing speech (called when alert clears)
+        function stopSpeech() {
+            window.speechSynthesis.cancel();
+            isSpeaking = false;
+            isSpeechLocked = false;
+            console.log('Speech stopped and reset');
+        }
+
+        function translateUI() {
+            const lang = preferredLanguage || 'English';
+            const ui = alertTranslations[lang]?.UI || alertTranslations.English.UI;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (ui[key]) el.textContent = ui[key];
+            });
+        }
+
+        // Initialize speech synthesis on page load
+        function initSpeechSynthesis() {
+            // Ensure speech synthesis is ready
+            if ('speechSynthesis' in window) {
+                // Cancel any pending utterances
+                window.speechSynthesis.cancel();
+                console.log('✅ Speech synthesis initialized');
+                return true;
+            }
+            console.warn('❌ Speech synthesis not supported');
+            return false;
+        }
+
+        // Announce monitoring start with retry logic
+        function announceMonitoringStart() {
+            // Functionality removed as per user request
+            console.log('Monitoring start announcement suppressed');
+        }
+
+        window.onload = () => { 
+            translateUI();
+        };
+        videoFeed.onload = () => { loader.style.display = 'none'; };
+
+        async function saveContact() {
+            initAudioContext();
+            const name = document.getElementById('contact-name').value;
+            const phone = document.getElementById('contact-phone').value;
+            await fetch('/api/personal/setup-contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, phone })
+            });
+            const status = document.getElementById('save-status');
+            status.style.display = 'block';
+            speak('CONTACT_SAVED');
+            setTimeout(() => { status.style.display = 'none'; }, 2000);
+        }
+
+        function triggerManualTest() {
+            initAudioContext();
+            addLog("🛠️ Manual emergency test triggered");
+            triggerEmergencyAlert("MANUAL TEST");
+            playAlarm('danger');
+        }
+
+        function addLog(msg) {
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.textContent = `${new Date().toLocaleTimeString()} - ${msg}`;
+            logEl.prepend(div);
+            console.log("Log Added:", msg);
+        }
+
+        async function checkStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                const lang = preferredLanguage || 'English';
+                
+                if (data.alert) {
+                    statusPanel.className = 'status-panel danger';
+                    statusDot.style.background = 'var(--danger)';
+                    statusDot.classList.add('pulse');
+                    playAlarm('danger');
+                    
+                    let alertKey = 'DANGER: DROWSY';
+                    if (data.status.includes('ROAD')) alertKey = 'DANGER: ROAD ATTENTION LOST';
+                    else if (data.status.includes('PHONE')) alertKey = 'DANGER: PHONE';
+                    else if (data.status.includes('HEAD')) alertKey = 'DANGER: HEAD DOWN';
+                    
+                    statusEl.textContent = (alertTranslations[lang] && alertTranslations[lang][alertKey]) || data.status;
+                    const ui = alertTranslations[lang]?.UI || alertTranslations.English.UI;
+                    statusDesc.textContent = ui['MONITORING_DESC_DANGER'] || 'Immediate action required!';
+                    
+                    // Show danger overlay immediately
+                    dangerOverlay.classList.add('active');
+                    warningOverlay.classList.remove('active');
+                    
+                    // Log and trigger emergency on first detection
+                    if (!lastAlertState) {
+                        addLog(`⚠️ CRITICAL: ${data.status}`);
+                        // Trigger emergency SMS immediately on first danger detection
+                        triggerEmergencyAlert(data.status);
+                    }
+                    // Speak immediately without delay for critical alerts
+                    speakImmediately(alertKey);
+                } else if (data.status && data.status !== 'SAFE') {
+                    // Start timer for warning
+                    if (warningStartTime === 0) {
+                        warningStartTime = Date.now();
+                    }
+
+                    // Only trigger if threshold met
+                    if (Date.now() - warningStartTime >= WARNING_DELAY_MS) {
+                        statusPanel.className = 'status-panel warning';
+                        statusDot.style.background = 'var(--warning)';
+                        statusDot.classList.remove('pulse');
+                        playAlarm('warning');
+                        
+                        let alertKey = 'YAWNING'; // Default fallback
+                        if (data.status.includes('SLEEPY')) alertKey = 'WARNING: SLEEPY';
+                        else if (data.status.includes('PHONE')) alertKey = 'PHONE USAGE (WARNING)';
+                        else if (data.status.includes('HEAD')) alertKey = 'HEAD DISTRACTION (DOWN)';
+                        else if (data.status.includes('ROAD')) alertKey = 'ROAD ATTENTION WARNING';
+                        else if (data.status.includes('YAWNING')) alertKey = 'YAWNING';
+                        
+                        statusEl.textContent = (alertTranslations[lang] && alertTranslations[lang][alertKey]) || data.status;
+                        const ui = alertTranslations[lang]?.UI || alertTranslations.English.UI;
+                        statusDesc.textContent = ui['MONITORING_DESC_WARNING'] || 'Please stay alert and focus on the road.';
+                        
+                        // Show warning overlay immediately
+                        dangerOverlay.classList.remove('active');
+                        warningOverlay.classList.add('active');
+
+                        if (lastStatusMsg !== data.status) {
+                            addLog(`📢 WARNING: ${data.status}`);
+                        }
+                        // Speak warning immediately
+                        speakImmediately(alertKey);
+                    }
+                } else {
+                    // SAFE STATE - Stop any ongoing speech/alerts
+                    warningStartTime = 0; // RESET TIMER
+                    stopSpeech();
+                    
+                    statusPanel.className = 'status-panel';
+                    statusDot.style.background = 'var(--safe)';
+                    statusDot.classList.remove('pulse');
+                    
+                    statusEl.textContent = (alertTranslations[lang] && alertTranslations[lang]['SAFE']) || 'SYSTEM ACTIVE';
+                    const ui = alertTranslations[lang]?.UI || alertTranslations.English.UI;
+                    statusDesc.textContent = ui['MONITORING_DESC_SAFE'] || 'Monitoring for eye closure, head movement, and road attention.';
+                    
+                    // Hide all overlays immediately
+                    dangerOverlay.classList.remove('active');
+                    warningOverlay.classList.remove('active');
+                    
+                    // Reset emergency state when safe
+                    if (emergencyActive) {
+                        emergencyActive = false;
+                        const ui = alertTranslations[lang]?.UI || alertTranslations.English.UI;
+                        document.getElementById('sms-badge').textContent = ui['READY'] || 'Ready';
+                        document.getElementById('sms-badge').style.color = 'var(--safe)';
+                        addLog("✅ System returned to safe state");
+                    }
+                }
+                lastAlertState = data.alert;
+                lastStatusMsg = data.status;
+            } catch (err) { console.error("Status error:", err); }
+        }
+
+        async function triggerEmergencyAlert(reason) {
+            const badge = document.getElementById('sms-badge');
+            const lang = preferredLanguage || 'English';
+            const ui = alertTranslations[lang]?.UI || alertTranslations.English.UI;
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                try {
+                    const res = await fetch('/api/emergency/trigger', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude,
+                            reason: reason
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.sms_status === 'Sent') {
+                        badge.textContent = ui['SMS_DISPATCHED'] || 'SMS Dispatched';
+                        addLog("✅ Emergency SMS sent to family");
+                    } else {
+                        badge.textContent = ui['SMS_FAILED'] || 'SMS Failed';
+                        addLog("❌ SMS Failed: " + (data.error || 'Check credentials'));
+                    }
+                } catch (e) { badge.textContent = ui['ERROR'] || 'Error'; }
+            }, (err) => {
+                fetch('/api/emergency/trigger', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ latitude: 0, longitude: 0, reason: reason })
+                });
+                badge.textContent = ui['GPS_ERROR'] || 'GPS Error';
+            }, { timeout: 5000 });
+        }
+
+        setInterval(checkStatus, 1000);
+    </script>
+</body>
+</html>

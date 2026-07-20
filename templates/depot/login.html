@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Depot System | Admin Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --navy: #061b34;
+            --navy-2: #082748;
+            --ink: #08213d;
+            --green: #16783a;
+            --line: #c7d2e2;
+            --muted: #53627a;
+            --blue: #0b5bd3;
+            --white: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            color: var(--ink);
+            background: var(--navy);
+        }
+
+        .login-shell {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 54.5% 45.5%;
+            position: relative;
+            isolation: isolate;
+        }
+
+        .brand-panel {
+            position: relative;
+            min-height: 100vh;
+            overflow: hidden;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 251, 255, 0.9) 42%, rgba(5, 27, 52, 0.18) 100%),
+                url("{{ url_for('static', filename='depot_reference_photo.jpg') }}") 58% bottom / cover no-repeat;
+            clip-path: polygon(0 0, 96% 0, 91% 100%, 0 100%);
+        }
+
+        .brand-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.78) 35%, rgba(255, 255, 255, 0.04) 58%, rgba(5, 22, 42, 0.5) 100%),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.14), transparent 60%);
+            pointer-events: none;
+        }
+
+        .brand-panel::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 4.2%;
+            width: 10px;
+            height: 100%;
+            background: linear-gradient(180deg, #1d7a3d, #279a4d);
+            transform: skewX(-4deg);
+            box-shadow: 8px 0 18px rgba(1, 14, 27, 0.28);
+            z-index: 3;
+        }
+
+        .brand-content {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: grid;
+            grid-template-rows: 1fr auto auto;
+            padding: clamp(2rem, 4vw, 4.5rem) 9% 1.35rem 8%;
+        }
+
+        .brand-main {
+            align-self: start;
+            text-align: center;
+            padding-top: clamp(1rem, 3vh, 3rem);
+        }
+
+        .brand-logo {
+            width: 220px;
+            height: 220px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto 1.2rem;
+        }
+
+        .brand-title {
+            font-size: clamp(2.4rem, 4vw, 4rem);
+            line-height: 1;
+            font-weight: 900;
+            color: var(--ink);
+            letter-spacing: 0;
+            text-transform: uppercase;
+        }
+
+        .brand-copy {
+            margin-top: 0.75rem;
+            color: #0d2644;
+            font-size: clamp(1rem, 1.25vw, 1.22rem);
+            font-weight: 500;
+        }
+
+        .brand-tagline {
+            margin: 0.85rem auto 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.9rem;
+            color: var(--green);
+            font-size: clamp(1.1rem, 1.55vw, 1.55rem);
+            font-weight: 900;
+        }
+
+        .brand-tagline::before,
+        .brand-tagline::after {
+            content: "";
+            width: 110px;
+            height: 2px;
+            background: #102642;
+        }
+
+        .feature-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.2rem;
+            width: min(680px, 88%);
+            margin: 0 auto 1rem;
+        }
+
+        .feature-item {
+            display: grid;
+            justify-items: center;
+            gap: 0.65rem;
+            color: #ffffff;
+            text-align: center;
+            font-size: 0.88rem;
+            font-weight: 800;
+            line-height: 1.15;
+            text-transform: uppercase;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+        }
+
+        .feature-icon {
+            width: 74px;
+            height: 74px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.96);
+            color: var(--green);
+            font-size: 1.85rem;
+            box-shadow: 0 12px 24px rgba(4, 18, 34, 0.24);
+        }
+
+        .brand-footer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.3rem;
+            min-height: 54px;
+            color: #ffffff;
+            background: rgba(5, 24, 46, 0.9);
+            margin: 0 -9% -1.35rem -8%;
+            padding-right: 8%;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .auth-panel {
+            position: relative;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 3rem 5.5vw;
+            background:
+                radial-gradient(circle at 68% 26%, rgba(31, 114, 187, 0.22), transparent 20rem),
+                linear-gradient(145deg, #06213d 0%, #031427 100%);
+        }
+
+        .auth-stack {
+            width: min(100%, 540px);
+        }
+
+        .login-card {
+            width: 100%;
+            padding: 2.55rem 2.55rem 2.6rem;
+            border: 1px solid rgba(255, 255, 255, 0.48);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.97);
+            box-shadow: 0 28px 60px rgba(0, 0, 0, 0.26);
+        }
+
+        .login-heading {
+            text-align: center;
+            margin-bottom: 1.9rem;
+        }
+
+        .login-logo {
+            width: 116px;
+            height: 116px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto 1rem;
+        }
+
+        .login-heading h2 {
+            color: var(--ink);
+            font-size: 2.1rem;
+            line-height: 1;
+            font-weight: 900;
+            letter-spacing: 0;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .login-heading p {
+            color: #31415a;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .error {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            margin-bottom: 1rem;
+            padding: 0.85rem 0.95rem;
+            border: 1px solid #ffd0c9;
+            border-radius: 8px;
+            color: #b42318;
+            background: #fff1f0;
+            font-weight: 700;
+        }
+
+        .form-group {
+            margin-bottom: 1.35rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.6rem;
+            color: #0d213c;
+            font-size: 0.95rem;
+            font-weight: 800;
+        }
+
+        .field-wrap {
+            height: 58px;
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0 1rem;
+            border: 1.5px solid #c2cfdd;
+            border-radius: 6px;
+            background: #ffffff;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .field-wrap:focus-within {
+            border-color: #2a7df0;
+            box-shadow: 0 0 0 4px rgba(42, 125, 240, 0.12);
+        }
+
+        .field-wrap i {
+            width: 1.3rem;
+            color: #092748;
+            font-size: 1.08rem;
+            text-align: center;
+        }
+
+        .field-wrap input {
+            width: 100%;
+            min-width: 0;
+            border: 0;
+            outline: 0;
+            color: #12233c;
+            background: transparent;
+            font: inherit;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .field-wrap input::placeholder {
+            color: #6c7890;
+        }
+
+        .password-toggle {
+            width: 34px;
+            height: 34px;
+            flex: 0 0 auto;
+            display: grid;
+            place-items: center;
+            border: 0;
+            border-radius: 50%;
+            background: transparent;
+            color: #092748;
+            cursor: pointer;
+        }
+
+        .form-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin: 0.25rem 0 1.55rem;
+            color: #273a54;
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+
+        .remember-me {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.65rem;
+            cursor: pointer;
+        }
+
+        .remember-me input {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--green);
+        }
+
+        .forgot-password {
+            color: var(--green);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .login-btn {
+            width: 100%;
+            height: 62px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.9rem;
+            border: 0;
+            border-radius: 7px;
+            color: #ffffff;
+            background: linear-gradient(135deg, #092b51 0%, #061d37 100%);
+            box-shadow: 0 15px 26px rgba(5, 24, 48, 0.24);
+            font: inherit;
+            font-size: 1.05rem;
+            font-weight: 900;
+            letter-spacing: 0;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .auth-footer {
+            margin-top: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+            color: rgba(255, 255, 255, 0.86);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .home-link {
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .home-link a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            color: rgba(255, 255, 255, 0.78);
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        @media (max-width: 1100px) {
+            .login-shell {
+                grid-template-columns: 1fr;
+            }
+
+            .brand-panel {
+                min-height: 720px;
+                clip-path: none;
+            }
+
+            .brand-panel::after {
+                display: none;
+            }
+
+            .auth-panel {
+                min-height: auto;
+                padding: 3rem 1.25rem;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .brand-content {
+                padding: 1.6rem 1rem 0;
+            }
+
+            .brand-logo {
+                width: 150px;
+                height: 150px;
+            }
+
+            .brand-title {
+                font-size: 2.2rem;
+            }
+
+            .brand-tagline {
+                font-size: 1rem;
+            }
+
+            .brand-tagline::before,
+            .brand-tagline::after {
+                width: 52px;
+            }
+
+            .feature-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+
+            .brand-footer {
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                font-size: 0.9rem;
+                padding: 0.85rem 1rem;
+                margin: 0 -1rem;
+            }
+
+            .login-card {
+                padding: 1.7rem 1.25rem 1.9rem;
+                border-radius: 14px;
+            }
+
+            .form-options {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="login-shell">
+        <section class="brand-panel" aria-label="Surakshit Yatra smart depot">
+            <div class="brand-content">
+                <div class="brand-main">
+                    <img class="brand-logo" src="{{ url_for('static', filename='logo_reference_exact.png') }}" alt="Surakshit Yatra logo">
+                    <h1 class="brand-title">Surakshit Yatra</h1>
+                    <p class="brand-copy">Smart Depot System</p>
+                    <div class="brand-tagline">Stay Alert. Stay Alive.</div>
+                </div>
+
+                <div class="feature-row" aria-label="Depot features">
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-location-dot" aria-hidden="true"></i></div>
+                        <span>Live Tracking</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-shield-halved" aria-hidden="true"></i></div>
+                        <span>Fleet Safety</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-bell" aria-hidden="true"></i></div>
+                        <span>Real-Time<br>Alerts</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon"><i class="fas fa-chart-simple" aria-hidden="true"></i></div>
+                        <span>Smart<br>Analytics</span>
+                    </div>
+                </div>
+
+                <div class="brand-footer">
+                    <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                    <span>Secure Access</span>
+                    <span>|</span>
+                    <span>Authorized Personnel Only</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="auth-panel" aria-label="Admin login">
+            <div class="auth-stack">
+                <div class="login-card">
+                    <div class="login-heading">
+                        <img class="login-logo" src="{{ url_for('static', filename='logo_reference_exact.png') }}" alt="Surakshit Yatra logo">
+                        <h2>Admin Login</h2>
+                        <p>Sign in to access Smart Depot Dashboard</p>
+                    </div>
+
+
+                    {% if error %}
+                    <div class="error" role="alert">
+                        <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                        <span>{{ error }}</span>
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('depot_login') }}">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <div class="field-wrap">
+                                <i class="fas fa-user" aria-hidden="true"></i>
+                                <input type="text" id="username" name="username" required autofocus autocomplete="username" placeholder="Enter admin username">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <div class="field-wrap">
+                                <i class="fas fa-lock" aria-hidden="true"></i>
+                                <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter password">
+                                <button type="button" class="password-toggle" id="passwordToggle" aria-label="Show password">
+                                    <i class="fas fa-eye-slash" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-options">
+                            <label class="remember-me" for="remember">
+                                <input type="checkbox" id="remember" name="remember">
+                                <span>Remember me</span>
+                            </label>
+                            <a href="#" class="forgot-password">Forgot Password?</a>
+                        </div>
+
+                        <button type="submit" class="login-btn">
+                            <i class="fas fa-right-to-bracket" aria-hidden="true"></i>
+                            <span>Login</span>
+                        </button>
+                    </form>
+                    <div class="login-link" style="text-align: center; margin-top: 1.5rem; font-size: 0.95rem; font-weight: 600; color: #31415a;">
+                        Don't have an account? <a href="{{ url_for('depot_register') }}" style="color: var(--navy); font-weight: 800; text-decoration: none;">Register Here</a>
+                    </div>
+                </div>
+
+                <div class="auth-footer">
+                    <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                    <span>Smart Depot System</span>
+                </div>
+
+                <div class="home-link">
+                    <a href="{{ url_for('index') }}">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                        Back to Home
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const passwordInput = document.getElementById('password');
+        const passwordToggle = document.getElementById('passwordToggle');
+
+        passwordToggle.addEventListener('click', () => {
+            const isHidden = passwordInput.type === 'password';
+            passwordInput.type = isHidden ? 'text' : 'password';
+            passwordToggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+            passwordToggle.querySelector('i').className = isHidden ? 'fas fa-eye' : 'fas fa-eye-slash';
+        });
+    </script>
+</body>
+</html>

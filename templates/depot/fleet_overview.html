@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Overview</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #ecf0f1; }
+        .bus-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .bus-info h6 { color: #2c3e50; margin-bottom: 5px; }
+        .bus-info p { color: #7f8c8d; font-size: 0.9em; margin: 2px 0; }
+        .status-badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+        .available { background-color: rgba(39, 174, 96, 0.2); color: #27ae60; }
+        .in-service { background-color: rgba(52, 152, 219, 0.2); color: #3498db; }
+        .maintenance { background-color: rgba(243, 156, 18, 0.2); color: #f39c12; }
+        .delayed { background-color: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified-theme.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <a href="{{ url_for('depot_dashboard') }}" class="btn btn-outline-secondary mb-3">← Back to Dashboard</a>
+        
+        <h1 class="mb-4">Fleet Overview</h1>
+
+        <!-- Fleet Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>Total Buses</h5>
+                        <h2 style="color: #3498db;">{{ fleet_stats.total }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>Available</h5>
+                        <h2 style="color: #27ae60;">{{ fleet_stats.available }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>In Service</h5>
+                        <h2 style="color: #9b59b6;">{{ fleet_stats.in_service }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>Maintenance</h5>
+                        <h2 style="color: #f39c12;">{{ fleet_stats.maintenance }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Bus Button -->
+        <div class="mb-4">
+            <a href="{{ url_for('add_bus') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Bus
+            </a>
+        </div>
+
+        <!-- Bus List -->
+        <h5 class="mb-3">All Buses</h5>
+        {% for bus in buses %}
+        <div class="bus-card">
+            <div class="bus-info">
+                <h6><i class="fas fa-bus"></i> {{ bus.bus_number }}</h6>
+                <p><strong>License Plate:</strong> {{ bus.license_plate }}</p>
+                <p><strong>Capacity:</strong> {{ bus.capacity }} persons</p>
+                <p><strong>Fuel Level:</strong> {{ bus.fuel_level }}%</p>
+            </div>
+            <div>
+                <span class="status-badge {{ bus.status.lower().replace(' ', '-') }}">{{ bus.status }}</span>
+            </div>
+            <div class="ms-3 d-flex align-items-center">
+                <a href="{{ url_for('edit_bus', bus_id=bus.id) }}" class="btn btn-sm btn-outline-primary me-2">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+                
+                <form method="POST" action="{{ url_for('delete_bus', bus_id=bus.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this bus?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger me-2">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ url_for('update_bus_status', bus_id=bus.id) }}" class="d-inline">
+                    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 140px;">
+                        <option value="">Status...</option>
+                        <option value="Available">Available</option>
+                        <option value="In Service">In Service</option>
+                        <option value="Under Maintenance">Under Maintenance</option>
+                        <option value="Delayed">Delayed</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

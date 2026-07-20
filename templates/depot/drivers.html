@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Drivers</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #ecf0f1;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .driver-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .driver-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .driver-photo {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            background-color: #e0e0e0;
+            display: block;
+        }
+
+        .driver-photo-placeholder {
+            width: 100%;
+            height: 220px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background-color: #3498db;
+            color: #ffffff;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .driver-photo-placeholder .initials {
+            pointer-events: none;
+        }
+        
+        .driver-info {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+        }
+        
+        .driver-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .driver-detail {
+            font-size: 0.95rem;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        
+        .driver-detail strong {
+            color: #333;
+            display: inline-block;
+            width: 120px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .status-active {
+            background-color: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+        }
+        
+        .status-inactive {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+        
+        .driver-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 12px;
+        }
+        
+        .driver-actions a,
+        .driver-actions form {
+            flex: 1;
+        }
+        
+        .driver-actions button,
+        .driver-actions a {
+            width: 100%;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified-theme.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <a href="{{ url_for('depot_dashboard') }}" class="btn btn-outline-secondary mb-3">← Back to Dashboard</a>
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Manage Drivers</h1>
+            <a href="{{ url_for('add_depot_driver') }}" class="btn btn-success">
+                <i class="fas fa-plus-circle"></i> Add New Driver
+            </a>
+        </div>
+
+        {% if get_flashed_messages(category_filter=['success']) %}
+        {% for message in get_flashed_messages(category_filter=['success']) %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if get_flashed_messages(category_filter=['error']) %}
+        {% for message in get_flashed_messages(category_filter=['error']) %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="row">
+            {% for driver in drivers %}
+            <div class="col-md-4 d-flex align-items-stretch mb-4">
+                <div class="driver-card">
+                    {% if driver.photo_filename %}
+                    <img src="{{ url_for('static', filename='uploads/drivers/' + driver.photo_filename) }}" alt="{{ driver.name }}" class="driver-photo" onerror="handleImgError(this, '{{ driver.name|e }}')">
+                    <div class="driver-photo-placeholder" data-name="{{ driver.name|e }}">
+                        <span class="initials"></span>
+                    </div>
+                    {% else %}
+                    <div class="driver-photo-placeholder" data-name="{{ driver.name|e }}" style="display:flex;">
+                        <span class="initials"></span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="driver-info">
+                        <div class="driver-name">{{ driver.name }}</div>
+                        
+                        <div class="driver-detail">
+                            <strong>License:</strong>
+                            {{ driver.license_number }}
+                        </div>
+                        
+                        {% if driver.phone %}
+                        <div class="driver-detail">
+                            <strong>Phone:</strong>
+                            <a href="tel:{{ driver.phone }}">{{ driver.phone }}</a>
+                        </div>
+                        {% endif %}
+                        
+                        {% if driver.email %}
+                        <div class="driver-detail">
+                            <strong>Email:</strong>
+                            <a href="mailto:{{ driver.email }}">{{ driver.email }}</a>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="driver-detail">
+                            <strong>Status:</strong>
+                            <span class="status-badge {% if driver.status == 'Active' %}status-active{% else %}status-inactive{% endif %}">
+                                {{ driver.status }}
+                            </span>
+                        </div>
+                        
+                        <div class="driver-actions">
+                            <button type="button" class="btn btn-sm btn-secondary upload-photo-btn" data-driver-id="{{ driver.id }}">
+                                <i class="fas fa-upload"></i> Photo
+                            </button>
+
+                            <a href="{{ url_for('edit_depot_driver', driver_id=driver.id) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <form method="POST" action="{{ url_for('delete_depot_driver', driver_id=driver.id) }}" style="margin: 0;">
+                                <button type="submit" class="btn btn-sm btn-danger w-100" onclick="return confirm('Delete this driver?');">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </form>
+
+                            <input type="file" accept="image/*" class="d-none upload-photo-input" id="upload-{{ driver.id }}" data-driver-id="{{ driver.id }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if not drivers %}
+        <div class="alert alert-info mt-4">
+            <i class="fas fa-info-circle"></i> No drivers added yet. 
+            <a href="{{ url_for('add_depot_driver') }}">Add the first driver</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function initialsFromName(name){
+            if(!name) return '';
+            const parts = name.trim().split(/\s+/).filter(Boolean);
+            if(parts.length === 0) return '';
+            if(parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+            return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+        }
+
+        function handleImgError(imgElem, name){
+            try{
+                imgElem.style.display = 'none';
+                const ph = imgElem.nextElementSibling;
+                if(ph && ph.classList.contains('driver-photo-placeholder')){
+                    const initials = initialsFromName(name);
+                    const span = ph.querySelector('.initials');
+                    if(span) span.textContent = initials;
+                    ph.style.display = 'flex';
+                }
+            }catch(e){
+                console.error('handleImgError', e);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function(){
+            document.querySelectorAll('.driver-photo-placeholder').forEach(function(ph){
+                if(ph.style.display === 'none' || ph.style.display === ''){
+                    const name = ph.getAttribute('data-name') || '';
+                    const span = ph.querySelector('.initials');
+                    if(span) span.textContent = initialsFromName(name);
+                }
+            });
+
+            // Upload photo quick action handlers
+            document.querySelectorAll('.upload-photo-btn').forEach(function(btn){
+                btn.addEventListener('click', function(e){
+                    const driverId = btn.getAttribute('data-driver-id');
+                    const input = document.getElementById('upload-' + driverId);
+                    if(input) input.click();
+                });
+            });
+
+            document.querySelectorAll('.upload-photo-input').forEach(function(input){
+                input.addEventListener('change', function(e){
+                    const file = input.files[0];
+                    const driverId = input.getAttribute('data-driver-id');
+                    if(!file) return;
+
+                    const formData = new FormData();
+                    formData.append('photo', file);
+
+                    const btn = document.querySelector('.upload-photo-btn[data-driver-id="' + driverId + '"]');
+                    if(btn) btn.disabled = true;
+
+                    fetch('/depot/driver/' + driverId + '/upload-photo', {
+                        method: 'POST',
+                        body: formData
+                    }).then(resp => resp.json())
+                    .then(data => {
+                        if(btn) btn.disabled = false;
+                        if(data && data.success){
+                            // Update image src in the same card
+                            const card = input.closest('.driver-card');
+                            if(card){
+                                const img = card.querySelector('img.driver-photo');
+                                const ph = card.querySelector('.driver-photo-placeholder');
+                                const newUrl = '/static/uploads/drivers/' + data.filename + '?t=' + Date.now();
+                                if(img){
+                                    img.src = newUrl;
+                                    img.style.display = 'block';
+                                } else {
+                                    // create img element
+                                    const newImg = document.createElement('img');
+                                    newImg.className = 'driver-photo';
+                                    newImg.src = newUrl;
+                                    newImg.alt = '';
+                                    newImg.onerror = function(){ handleImgError(newImg, (ph && ph.getAttribute('data-name')) || ''); };
+                                    card.insertBefore(newImg, card.querySelector('.driver-info'));
+                                }
+                                if(ph) ph.style.display = 'none';
+                            }
+                        } else {
+                            alert('Upload failed: ' + (data && data.error ? data.error : 'Unknown'));
+                        }
+                    }).catch(err => {
+                        if(btn) btn.disabled = false;
+                        alert('Upload error: ' + err);
+                    }).finally(()=>{ input.value = ''; });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
